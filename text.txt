@@ -1,3 +1,0 @@
-printf 10
-printf 15
-printf 'aiden'

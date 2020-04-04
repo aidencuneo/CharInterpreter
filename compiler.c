@@ -1,4 +1,4 @@
-#include "interpreter.h"
+#include "compiler.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -87,6 +87,10 @@ int main(int argc, char ** argv)
             strcat(compiled, C_STACKPOP);
         else if (ch == '>')
             strcat(compiled, C_STACKPUSH);
+        else if (ch == '(')
+            strcat(compiled, C_SOFTPOP);
+        else if (ch == ')')
+            strcat(compiled, C_SOFTPUSH);
         else if (ch == ',')
             strcat(compiled, C_GETBYTE);
         else if (ch == 'q')
@@ -100,7 +104,7 @@ int main(int argc, char ** argv)
 
     fileHeaders = "#include <stdio.h>\n#include <string.h>\n#include <stdlib.h>\n";
     fileStackStruct = "struct stack{int maxsize;int top;int*items;};struct stack*newStack(int capacity){struct stack*pt=(struct stack*)malloc(sizeof(struct stack));pt->maxsize=capacity;pt->top=-1;pt->items=(int*)malloc(sizeof(int)*capacity);return pt;}int size(struct stack*pt){return pt->top+1;}\nint isEmpty(struct stack*pt){return pt->top==-1;}\nint isFull(struct stack*pt){return pt->top==pt->maxsize-1;}\nvoid push(struct stack*pt,int x){if(isFull(pt))exit(EXIT_FAILURE);pt->items[++pt->top]=x;}\nint peek(struct stack*pt){if (!isEmpty(pt))return pt->items[pt->top];else return 0;}\nint pop(struct stack*pt){if(isEmpty(pt))return 0;return pt->items[pt->top--];}\n";
-    fileStart = "int main(int argc,char**argv){int c=0;struct stack*pt=newStack(4096);\n";
+    fileStart = "int main(int argc,char**argv){int c=0;struct stack*pt=newStack(4096);char d[2];\n";
     fileEnd = "return 0;}";
 
     FILE * fp = fopen(argv[2], "w");

@@ -14,24 +14,27 @@
 #define C_13 "c+=13;"
 #define C_14 "c+=14;"
 #define C_15 "c+=15;"
+
 #define C_MINUS "c-=pop(pt);"
 #define C_PLUS "c+=pop(pt);"
-#define C_WSET "w=c;"
-#define C_WGET "c=w;"
-#define C_XSET "x=c;"
-#define C_XGET "c=x;"
-#define C_YSET "y=c;"
-#define C_YGET "c=y;"
-#define C_ZSET "z=c;"
-#define C_ZGET "c=z;"
+
 #define C_SEMICOLON "}"
+
 #define C_IFTRUE "if(c>0){"
 #define C_IFNOT "if(c==0){"
+
 #define C_WHILETRUE "while(c>0){"
 #define C_WHILENOT "while(c==0){"
+
+#define C_PRINT "printf(\"%%c\",c);"
 #define C_PRINTF "printf(\"%%d\",c);"
+
 #define C_STACKPOP "c=pop(pt);"
 #define C_STACKPUSH "push(pt,c);c=0;"
-#define C_GETBYTE "char d[2];fgets(d,2,stdin);c=d[0];"
-#define C_PRINT "printf(\"%%c\",c);"
+
+#define C_SOFTPOP "c=peek(pt);"
+#define C_SOFTPUSH "push(pt,c);"
+
+#define C_GETBYTE "fgets(d,2,stdin);if(d[0]=='\\n')c=0;else c=d[0];"
+
 #define C_EXIT "return 0;"
