@@ -25,7 +25,7 @@ int main(int argc, char ** argv)
     if (!buffer)
         return 0;
 
-    char compiled[9128];
+    char * compiled = malloc(9128 + 1);
     int paused = 0;
 
     for (int i = 0; i < length; i++)
@@ -114,6 +114,8 @@ int main(int argc, char ** argv)
     fprintf(fp, compiled, 1);
     fprintf(fp, fileEnd, 1);
     fclose(fp);
+
+    free(compiled);
 
     return 0;
 }
