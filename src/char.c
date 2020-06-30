@@ -5,7 +5,12 @@
 
 #include "char.h"
 
+#include "stack.c"
+#include "var.c"
+
 char * current_file;
+char * buffer = 0;
+struct stack * stack;
 
 char * tokens;
 int tokens_len;
@@ -17,154 +22,44 @@ int tokeninds_len;
 int minify = 0;
 int verbose = 0;
 
-struct stack
-{
-    int maxsize;
-    int top;
-    int * items;
-};
-
-struct stack * newStack(int capacity)
-{
-    struct stack * pt = malloc(sizeof(struct stack));
-    pt->maxsize = capacity;
-    pt->top = -1;
-    pt->items = malloc(capacity * sizeof(int));
-    return pt;
-}
-
-int size(struct stack * pt)
-{
-    return pt->top + 1;
-}
-
-int isEmpty(struct stack * pt)
-{
-    return pt->top == -1;
-}
-
-int isFull(struct stack * pt)
-{
-    return pt->top == pt->maxsize - 1;
-}
-
-void push(struct stack * pt, int x)
-{
-    if (isFull(pt))
-        exit(1);
-
-    pt->items[++pt->top] = x;
-}
-
-int peek(struct stack * pt)
-{
-    if (!isEmpty(pt))
-        return pt->items[pt->top];
-
-    return 0;
-}
-
-int pop(struct stack * pt)
-{
-    if (isEmpty(pt))
-        return 0;
-
-    return pt->items[pt->top--];
-}
-
-int pushBottom(struct stack * pt, int x)
-{
-    if (isFull(pt))
-        exit(1);
-
-    for (int i = ++pt->top; i >= 0; i--)
-        pt->items[i] = pt->items[i - 1];
-    pt->items[0] = x;
-}
-
-int popBottom(struct stack * pt)
-{
-    if (isEmpty(pt))
-        return 0;
-
-    int ptr = pt->items[0];
-    for (int i = 0; i < pt->top; i++)
-        pt->items[i] = pt->items[i + 1];
-    pt->items[pt->top] = 0;
-    if (pt->top > -1)
-        --pt->top;
-
-    return ptr;
-}
-
-int charCount(char * st, char ch)
-{
-    int count = 0;
-
-    for (int i = 0; st[i]; i++)
-        if (st[i] == ch)
-            count++;
-
-    return count;
-}
-
-char * readfile(char * fname)
-{
-    char * buffer;
-    long length;
-
-    FILE * f = fopen(fname, "rb");
-
-    if (!f) return 0;
-
-    fseek(f, 0, SEEK_END);
-    length = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    if (!length)
-    {
-        fclose(f);
-        return 0;
-    }
-
-    buffer = malloc(length);
-    strcpy(buffer, "");
-
-    if (buffer)
-        fread(buffer, 1, length, f);
-
-    fclose(f);
-
-    buffer = realloc(buffer, length + 1);
-    buffer[length] = '\0';
-
-    return buffer;
-}
-
 void error(char * text, char * buffer, int pos)
 {
     // int MAXLINE = 128;
 
-    char * linepreview = malloc(5 + 1);
-    linepreview[0] = buffer[pos - 2];
-    linepreview[1] = buffer[pos - 1];
-    linepreview[2] = buffer[pos];
-    linepreview[3] = buffer[pos + 1];
-    linepreview[4] = buffer[pos + 2];
-    linepreview[5] = 0;
-
     printf("\nProgram execution terminated:\n\n");
-    printf("At %s : Pos %d\n\n", current_file, pos);
-    printf("> {{ %s }}\n\n", linepreview);
+
+    if (buffer == NULL || pos < 0)
+    {
+        printf("(At %s)\n", current_file);
+    }
+    else
+    {
+        char * linepreview = malloc(5 + 1);
+        linepreview[0] = buffer[pos - 2];
+        linepreview[1] = buffer[pos - 1];
+        linepreview[2] = buffer[pos];
+        linepreview[3] = buffer[pos + 1];
+        linepreview[4] = buffer[pos + 2];
+        linepreview[5] = 0;
+
+        printf("At %s : Pos %d\n\n", current_file, pos);
+        printf("> {{ %s }}\n\n", linepreview);
+
+        free(linepreview);
+    }
+
     printf("Error: %s\n\n", text);
 
-    free(linepreview);
-
-    exit(1);
+    quit(1);
 }
 
 void pushToken(char tok, int ind)
 {
+    if (tokens_len >= MAXIMUM_RECURSION ||
+        tokeninds_len >= MAXIMUM_RECURSION
+    )
+        error("maximum scope depth exceeded", NULL, -1);
+
     tokens[tokens_len++] = tok;
     tokeninds[tokeninds_len++] = ind;
     // printf("\n]::+%d\n", tokens_len);
@@ -219,6 +114,18 @@ char * minify_code(char * code)
     return min;
 }
 
+void quit(int code)
+{
+    free(stack->items);
+    free(stack);
+    free(buffer);
+
+    free(tokens);
+    free(tokeninds);
+
+    exit(code);
+}
+
 int main(int argc, char ** argv)
 {
     char ** args = malloc(argc * sizeof(char *));
@@ -228,7 +135,8 @@ int main(int argc, char ** argv)
     {
         if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--version"))
         {
-            // printf("Quokka %s\n", VERSION);
+            printf("Char %s\n", VERSION);
+            free(args);
             return 0;
         }
         if (!strcmp(argv[i], "-m") || !strcmp(argv[i], "--minify"))
@@ -247,7 +155,8 @@ int main(int argc, char ** argv)
 
     current_file = args[0];
 
-    char * buffer = 0;
+    free(args);
+
     long length;
     FILE * f = fopen(current_file, "rb");
 
@@ -281,8 +190,8 @@ int main(int argc, char ** argv)
     }
 
     // Interpreter vars
+    stack = newStack(512); // Block size is 256
     int ptr = 0;
-    struct stack * stack = newStack(4096);
     int mult = 1; // 1 or -1
 
     int line = 1;
@@ -298,6 +207,16 @@ int main(int argc, char ** argv)
 
     tokeninds = malloc(MAXIMUM_RECURSION * sizeof(int));
     tokeninds_len = 0;
+
+    // Custom variables
+    int var_x = 0,
+        var_y = 0,
+        var_z = 0;
+
+    int var_g_defining = 0;
+    int var_g_index = -1;
+
+    int ret_index = -1;
 
     for (int i = 0; i < length; i++)
     {
@@ -336,16 +255,32 @@ int main(int argc, char ** argv)
             // printf("{%d}\n", last_tokenind);
 
             if (scope <= 0 || (
-                last_tokenind < 0 && (last_token == ':' || last_token == '.')
+                last_tokenind < 0 && (last_token == ':' || last_token == '.' || last_token == 'g')
             ))
                 error("program is already at minimum scope", buffer, i);
 
             if (skipping > 0)
+            {
                 skipping--;
+            }
 
             --scope;
 
-            if (last_token == ':')
+            if (last_token == 'g')
+            {
+                if (var_g_defining)
+                {
+                    // printf("FINISHED FUNCTION DEFINITION\n");
+                    var_g_defining = 0;
+                }
+                else
+                {
+                    // printf("RETURNING AFTER FUNCTION CALL\n");
+                    // printf("%d\n", last_tokenind);
+                    i = last_tokenind - 1;
+                }
+            }
+            else if (last_token == ':')
             {
                 // i = last_tokenind - 1;
 
@@ -369,14 +304,14 @@ int main(int argc, char ** argv)
         }
         else if (ch == '?' || ch == '!')
         {
+            ++scope;
+            pushToken(ch, i);
+
             if (skipping > 0)
             {
                 ++skipping;
                 continue;
             }
-
-            pushToken(ch, i);
-            ++scope;
 
             if (ch == '?')
             {
@@ -391,14 +326,14 @@ int main(int argc, char ** argv)
         }
         else if (ch == ':' || ch == '.')
         {
+            ++scope;
+            pushToken(ch, i);
+
             if (skipping > 0)
             {
                 ++skipping;
                 continue;
             }
-
-            pushToken(ch, i);
-            ++scope;
 
             if (ch == ':')
             {
@@ -451,6 +386,30 @@ int main(int argc, char ** argv)
             ptr += mult * 14;
         else if (ch == 'f')
             ptr += mult * 15;
+        else if (ch == 'g')
+        {
+            ++scope;
+            pushToken(ch, i + 1);
+
+            if (skipping > 0)
+            {
+                ++skipping;
+                continue;
+            }
+
+            if (var_g_index == -1)
+            {
+                printf("Defining from index %d...\n", i);
+                pushToken(ch, i + 1);
+                var_g_defining = 1;
+                var_g_index = i + 1;
+                ++skipping;
+            }
+            else
+            {
+                i = var_g_index - 1;
+            }
+        }
         else if (ch == '-')
             ptr -= pop(stack);
         else if (ch == '+')
@@ -478,6 +437,27 @@ int main(int argc, char ** argv)
             printf("%d", ptr);
         else if (ch == 'P')
             printf("%c", ptr);
+        else if (ch == 'x')
+            ptr = var_x;
+        else if (ch == 'y')
+            ptr = var_y;
+        else if (ch == 'z')
+            ptr = var_z;
+        else if (ch == 'X')
+        {
+            var_x = ptr;
+            ptr = 0;
+        }
+        else if (ch == 'Y')
+        {
+            var_y = ptr;
+            ptr = 0;
+        }
+        else if (ch == 'Z')
+        {
+            var_z = ptr;
+            ptr = 0;
+        }
         else if (ch == '<')
             ptr = pop(stack);
         else if (ch == '>')
@@ -500,18 +480,18 @@ int main(int argc, char ** argv)
         {
             char * in = malloc(2);
             fgets(in, 2, stdin);
-            if (*in == '\n')
+            if (*in == '\n' || *in < 0)
                 ptr = 0;
             else
                 ptr = *in;
         }
         else if (ch == 'q')
         {
-            exit(0);
+            quit(ptr);
         }
     }
 
-    free(buffer);
+    quit(0);
 
     return 0;
 }

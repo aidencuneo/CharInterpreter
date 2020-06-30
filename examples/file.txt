@@ -1,15 +1,1 @@
-# GET LINE OF INPUT
-
-1
-: , )
-;
-< # ERASE ZERO BYTE
-
-
-# PRINT CHARCODES
-
-1
-: <
-  ? p >0aP<
-  ;
-;
++++pZp0pzp q
