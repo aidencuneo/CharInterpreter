@@ -1,0 +1,55 @@
+,:],;  # Get a flipped line of input
+
+# Output init code
+'
+;rtp tni
+{)(niam tni
+>h.oidts< edulcni#'
+ffa :
+    ] <P [
+    /1*
+;
+
+# Iterate over stack
+< :
+    # if item is '+'
+    / ffd *  # item -= 43
+    ! ';++rtp' <P<P<P<P<P<P 0aP ;
+    ffd      # item += 43
+
+    # if item is '-'
+    / fff *  # item -= 45
+    ! ';--rtp' <P<P<P<P<P<P 0aP ;
+    fff      # item += 45
+
+    # if item is '*'
+    / ffc *  # item -= 42
+    ! ';2=*rtp' <P<P<P<P<P<P 0aP ;
+    ffc      # item += 42
+
+    # if item is '/'
+    / fff2 *  # item -= 47
+    ! ';2=/rtp' <P<P<P<P<P<P 0aP ;
+    fff2      # item += 47
+
+    # if item is 'p'
+    / fffffff7 *  # item -= 112
+    !
+        ';)rtp,"d%"(ftnirp'
+        <P<P<P<P<P<P<P<P<P<P<P<P<P<P<P<P<P 0aP
+    ;
+    fffffff7      # item += 12
+
+    # if item is 'P'
+    / fffff5 *  # item -= 112
+    !
+        ';)rtp,"c%"(ftnirp'
+        <P<P<P<P<P<P<P<P<P<P<P<P<P<P<P<P<P 0aP
+    ;
+    fffff5      # item += 12
+
+    <
+;
+
+'}' <P  # End with '}'
+0a   P  # Add trailing newline
