@@ -1,0 +1,9 @@
+# Set pointer to 15 (hex)
+f
+
+:            # while pointer > 0, do:
+    p        #   print integer value of pointer
+    > aP <   #   hard push pointer, print '\n', hard pop pointer
+    ! q ;    #   if (pointer <= 0) quit
+    /1*      #   decrement pointer
+;            # end

@@ -1,3 +1,5 @@
+#define MAXIMUM_RECURSION 100
+
 #define C_0 "c=0;"
 #define C_1 "++c;"
 #define C_2 "c+=2;"
