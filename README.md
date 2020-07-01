@@ -1,2 +1,2 @@
-# CharCompiler
- Compiler that analyses a file character by character and compiles into C.
+# CharInterpreter
+A stack-based lightweight programming language that interprets a script character by character.
