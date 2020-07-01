@@ -18,7 +18,7 @@ struct stack * newStack(int block_size)
     return pt;
 }
 
-int size(struct stack * pt)
+int stackSize(struct stack * pt)
 {
     return pt->top + 1;
 }

@@ -1,105 +1,25 @@
-,:],;  # Get a flipped line of input
-
-# Push zeroes into allocated variable positions
-0 ]  # ptr = 0
-0 X  # X   = 0
-0 Y  # Y   = 0
-0 Z  # Z   = 0
-
-# Iterate over stack
-< / fffffff8 *
-: fffffff8
-
-    # if item is '0'
-    / fff3 *  # item -= 48
-    !
-        [ 0 ]
-    ;
-    fff3      # item += 48
-
-    # if item is '+'
-    / ffd *  # item -= 43
-    !
-        [ 1 ]
-    ;
-    ffd      # item += 43
-
-    # if item is '-'
-    / fff *  # item -= 45
-    !
-        [ / 1 * ]
-    ;
-    fff      # item += 45
-
-    # if item is '*'
-    / ffc *  # item -= 42
-    !
-        [ )+ ]
-    ;
-    ffc      # item += 42
-
-    # if item is '/'
-    / fff2 *  # item -= 47
-    ! ;
-    fff2      # item += 47
-
-    # if item is 'x'
-    / ffffffff *  # item -= 120
-    !
-        [ x ]
-    ;
-    ffffffff      # item += 120
-
-    # if item is 'X'
-    / fffffd *  # item -= 88
-    !
-        [ ) X < ]
-    ;
-    fffffd      # item += 88
-
-     # if item is 'y'
-    / ffffffff1 *  # item -= 121
-    !
-        [ y ]
-    ;
-    ffffffff1      # item += 121
-
-    # if item is 'Y'
-    / fffffe *  # item -= 89
-    !
-        [ ) Y < ]
-    ;
-    fffffe      # item += 89
-
-    # if item is 'z'
-    / ffffffff2 *  # item -= 122
-    !
-        [ z ]
-    ;
-    ffffffff2      # item += 122
-
-    # if item is 'Z'
-    / ffffff *  # item -= 90
-    !
-        [ ) Z < ]
-    ;
-    ffffff      # item += 90
-
-    # if item is 'p'
-    / fffffff7 *  # item -= 112
-    !
-        [ p ]
-    ;
-    fffffff7      # item += 112
-
-    # if item is 'P'
-    / fffff5 *  # item -= 80
-    !
-        [ P ]
-    ;
-    fffff5      # item += 80
-
-    < / fffffff8 *
+# Define input function
+g
+    ,:>,;
 ;
 
-0aP  # Add trailing newline
+g  # Get a line of input
+
+1=b  # base = 1
+0=n  # num  = 0
+
+# Convert string into base 10 integer
+< :
+    '0'--
+
+    > $b ** > $n ++ ) =n <
+
+    '0'++
+
+    > $b > a** =b <  # base *= 10
+
+    <
+;
+
+$n p   # Print number
+0a P  # Add trailing newline

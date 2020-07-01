@@ -6,11 +6,13 @@
 #include "char.h"
 
 #include "stack.c"
+#include "varlist.c"
 #include "var.c"
 
 char * current_file;
 char * buffer = 0;
 struct stack * stack;
+struct varlist * varlist;
 
 char * tokens;
 int tokens_len;
@@ -209,6 +211,8 @@ int main(int argc, char ** argv)
     tokeninds_len = 0;
 
     // Custom variables
+    varlist = newVarlist(16);
+
     int var_x = 0,
         var_y = 0,
         var_z = 0;
@@ -302,6 +306,20 @@ int main(int argc, char ** argv)
                 // else token = 0;
             }
         }
+        else if (ch == '$')
+        {
+            char n = 0;
+            if (++i < length)
+                n = buffer[i];
+
+            if (isspace(n))
+                n = 0;
+
+            if (n == '@')
+                ptr = stack->top + 1;
+            else
+                ptr = varlistGet(varlist, n);
+        }
         else if (ch == '?' || ch == '!')
         {
             ++scope;
@@ -345,6 +363,77 @@ int main(int argc, char ** argv)
                 if (ptr)
                     ++skipping;
             }
+        }
+        else if (ch == '+')
+        {
+            char n = 0;
+            if (++i < length)
+                n = buffer[i];
+
+            if (n == '+')
+                ptr += pop(stack);
+            else
+            {
+                mult = 1;
+                --i;
+            }
+        }
+        else if (ch == '-')
+        {
+            char n = 0;
+            if (++i < length)
+                n = buffer[i];
+
+            if (n == '-')
+                ptr -= pop(stack);
+            else
+            {
+                mult = -1;
+                --i;
+            }
+        }
+        else if (ch == '*')
+        {
+            char n = 0;
+            if (++i < length)
+                n = buffer[i];
+
+            if (n == '*')
+                ptr *= pop(stack);
+            else
+            {
+                mult = ptr;
+                --i;
+            }
+        }
+        else if (ch == '/')
+        {
+            char n = 0;
+            if (++i < length)
+                n = buffer[i];
+
+            if (n == '/')
+                ptr /= pop(stack);
+            else
+                --i;
+        }
+        else if (ch == '=')
+        {
+            char n = 0;
+            if (++i < length)
+                n = buffer[i];
+
+            if (isspace(n))
+                n = 0;
+
+            if (!n)
+            {
+                --i;
+                continue;
+            }
+
+            varlistAdd(varlist, n, ptr);
+            ptr = 0;
         }
         if (ch == '\'' && !dcharmode)
             scharmode = !scharmode;
@@ -399,7 +488,6 @@ int main(int argc, char ** argv)
 
             if (var_g_index == -1)
             {
-                printf("Defining from index %d...\n", i);
                 pushToken(ch, i + 1);
                 var_g_defining = 1;
                 var_g_index = i + 1;
@@ -410,29 +498,6 @@ int main(int argc, char ** argv)
                 i = var_g_index - 1;
             }
         }
-        else if (ch == '-')
-            ptr -= pop(stack);
-        else if (ch == '+')
-            ptr += pop(stack);
-        else if (ch == '*')
-            mult = 1;
-        else if (ch == '/')
-            mult = -1;
-        // else if (ch == '!')
-        // {
-        //     token = ch;
-        //     ++scope;
-        // }
-        // else if (ch == ':')
-        // {
-        //     token = ch;
-        //     ++scope
-        // }
-        // else if (ch == '.')
-        // {
-        //     token = ch;
-        //     ++scope;
-        // }
         else if (ch == 'p')
             printf("%d", ptr);
         else if (ch == 'P')
@@ -480,7 +545,7 @@ int main(int argc, char ** argv)
         {
             char * in = malloc(2);
             fgets(in, 2, stdin);
-            if (*in == '\n' || *in < 0)
+            if (*in == '\n' || *in < 0 || *in == '\r')
                 ptr = 0;
             else
                 ptr = *in;
