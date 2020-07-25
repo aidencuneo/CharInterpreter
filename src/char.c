@@ -11,8 +11,11 @@
 
 char * current_file;
 char * buffer = 0;
+
 struct stack * stack;
 struct varlist * varlist;
+struct varlist * funcs;
+FILE *  file_descriptor;
 
 char * tokens;
 int tokens_len;
@@ -120,6 +123,15 @@ void quit(int code)
 {
     free(stack->items);
     free(stack);
+
+    free(varlist->names);
+    free(varlist->values);
+    free(varlist);
+
+    free(funcs->names);
+    free(funcs->values);
+    free(funcs);
+
     free(buffer);
 
     free(tokens);
@@ -157,8 +169,6 @@ int main(int argc, char ** argv)
 
     current_file = args[0];
 
-    free(args);
-
     long length;
     FILE * f = fopen(current_file, "rb");
 
@@ -195,6 +205,7 @@ int main(int argc, char ** argv)
     stack = newStack(512); // Block size is 256
     int ptr = 0;
     int mult = 1; // 1 or -1
+    file_descriptor = stdin;
 
     int line = 1;
     int skipping = 0;
@@ -212,15 +223,24 @@ int main(int argc, char ** argv)
 
     // Custom variables
     varlist = newVarlist(16);
+    funcs = newVarlist(8);
 
-    int var_x = 0,
-        var_y = 0,
-        var_z = 0;
+    int is_defining = 0; // Currently defining a function?
+    int ret_index = -1; // Index to return to after function call
 
-    int var_g_defining = 0;
-    int var_g_index = -1;
+    free(args);
 
-    int ret_index = -1;
+    // Push argv (in reverse) and argc to stack
+    for (int i = argc - 1; i >= 0; i--)
+    {
+        // For each argument, push it's entire contents with a null byte separator
+        if (stack->top > -1)
+            push(stack, 0);
+        int arglen = strlen(argv[i]);
+        for (int j = arglen - 1; j >= 0; j--)
+            push(stack, argv[i][j]);
+    }
+    push(stack, argc);
 
     for (int i = 0; i < length; i++)
     {
@@ -259,7 +279,7 @@ int main(int argc, char ** argv)
             // printf("{%d}\n", last_tokenind);
 
             if (scope <= 0 || (
-                last_tokenind < 0 && (last_token == ':' || last_token == '.' || last_token == 'g')
+                last_tokenind < 0 && (last_token == ':' || last_token == 'g')
             ))
                 error("program is already at minimum scope", buffer, i);
 
@@ -270,12 +290,12 @@ int main(int argc, char ** argv)
 
             --scope;
 
-            if (last_token == 'g')
+            if (last_token == 'F')
             {
-                if (var_g_defining)
+                if (is_defining)
                 {
                     // printf("FINISHED FUNCTION DEFINITION\n");
-                    var_g_defining = 0;
+                    is_defining = 0;
                 }
                 else
                 {
@@ -294,33 +314,8 @@ int main(int argc, char ** argv)
                     i = last_tokenind - 1;
                 }
             }
-            else if (last_token == '.')
-            {
-                // i = last_tokenind - 1;
-
-                if (!ptr)
-                {
-                    // ++scope;
-                    i = last_tokenind - 1;
-                }
-                // else token = 0;
-            }
         }
-        else if (ch == '$')
-        {
-            char n = 0;
-            if (++i < length)
-                n = buffer[i];
-
-            if (isspace(n))
-                n = 0;
-
-            if (n == '@')
-                ptr = stack->top + 1;
-            else
-                ptr = varlistGet(varlist, n);
-        }
-        else if (ch == '?' || ch == '!')
+        else if (ch == '?' || ch == ':')
         {
             ++scope;
             pushToken(ch, i);
@@ -331,39 +326,19 @@ int main(int argc, char ** argv)
                 continue;
             }
 
-            if (ch == '?')
-            {
-                if (!ptr)
-                    ++skipping;
-            }
-            else if (ch == '!')
-            {
-                if (ptr)
-                    ++skipping;
-            }
-        }
-        else if (ch == ':' || ch == '.')
-        {
-            ++scope;
-            pushToken(ch, i);
-
-            if (skipping > 0)
-            {
+            if (!ptr)
                 ++skipping;
-                continue;
-            }
-
-            if (ch == ':')
-            {
-                if (!ptr)
-                    ++skipping;
-            }
-            else if (ch == '.')
-            {
-                if (ptr)
-                    ++skipping;
-            }
         }
+        if (ch == '\'' && !dcharmode)
+            scharmode = !scharmode;
+        else if (ch == '"' && !scharmode)
+            dcharmode = !dcharmode;
+        else if (skipping)
+            continue;
+        else if (scharmode || dcharmode)
+            push(stack, ch);
+        else if (ch == '!')
+            ptr = !ptr;
         else if (ch == '+')
         {
             char n = 0;
@@ -435,14 +410,58 @@ int main(int argc, char ** argv)
             varlistAdd(varlist, n, ptr);
             ptr = 0;
         }
-        if (ch == '\'' && !dcharmode)
-            scharmode = !scharmode;
-        else if (ch == '"' && !scharmode)
-            dcharmode = !dcharmode;
-        else if (skipping)
-            continue;
-        else if (scharmode || dcharmode)
-            push(stack, ch);
+        else if (ch == '$')
+        {
+            char n = 0;
+            if (++i < length)
+                n = buffer[i];
+
+            if (isspace(n))
+                n = 0;
+
+            if (n == '@')
+                ptr = stack->top + 1;
+            else
+                ptr = varlistGet(varlist, n);
+        }
+        else if (ch == 'F')
+        {
+            char n = 0;
+            if (++i < length)
+                n = buffer[i];
+
+            if (isspace(n))
+                n = 0;
+
+            if (!n)
+            {
+                error("'F' keyword requires a trailing character to "
+                    "specify function name to define or call", buffer, i - 1);
+            }
+
+            ++scope;
+            pushToken(ch, i + 1);
+
+            if (skipping > 0)
+            {
+                ++skipping;
+                continue;
+            }
+
+            int ind = varlistGetDef(funcs, n, -1);
+            if (ind > -1)
+            {
+                // printf("%d (%c)\n", ind, buffer[ind - 1]);
+                i = ind - 1;
+            }
+            else
+            {
+                pushToken(ch, i + 1);
+                is_defining = 1;
+                varlistAdd(funcs, n, i + 1);
+                ++skipping;
+            }
+        }
         else if (ch == '0')
             ptr = 0;
         else if (ch == '1')
@@ -475,54 +494,28 @@ int main(int argc, char ** argv)
             ptr += mult * 14;
         else if (ch == 'f')
             ptr += mult * 15;
-        else if (ch == 'g')
+        else if (ch == 'o')
         {
-            ++scope;
-            pushToken(ch, i + 1);
+            if (file_descriptor != stdin)
+                fclose(file_descriptor);
 
-            if (skipping > 0)
+            char * filename = malloc(ptr + 1);
+            for (int i = 0; i < ptr; i++)
             {
-                ++skipping;
-                continue;
+                filename[i] = pop(stack);
+                if (!filename[i])
+                    break;
             }
+            filename[ptr] = 0;
 
-            if (var_g_index == -1)
-            {
-                pushToken(ch, i + 1);
-                var_g_defining = 1;
-                var_g_index = i + 1;
-                ++skipping;
-            }
-            else
-            {
-                i = var_g_index - 1;
-            }
+            file_descriptor = fopen(filename, "r+");
+            if (!file_descriptor)
+                file_descriptor = stdin;
         }
         else if (ch == 'p')
             printf("%d", ptr);
         else if (ch == 'P')
             printf("%c", ptr);
-        else if (ch == 'x')
-            ptr = var_x;
-        else if (ch == 'y')
-            ptr = var_y;
-        else if (ch == 'z')
-            ptr = var_z;
-        else if (ch == 'X')
-        {
-            var_x = ptr;
-            ptr = 0;
-        }
-        else if (ch == 'Y')
-        {
-            var_y = ptr;
-            ptr = 0;
-        }
-        else if (ch == 'Z')
-        {
-            var_z = ptr;
-            ptr = 0;
-        }
         else if (ch == '<')
             ptr = pop(stack);
         else if (ch == '>')
@@ -543,9 +536,12 @@ int main(int argc, char ** argv)
         }
         else if (ch == ',')
         {
-            char * in = malloc(2);
-            fgets(in, 2, stdin);
-            if (*in == '\n' || *in < 0 || *in == '\r')
+            char in[2] = {0};
+            fgets(in, 2, file_descriptor);
+
+            if (file_descriptor == stdin && (
+                *in == '\n' || *in == '\r' || *in < 0)
+            )
                 ptr = 0;
             else
                 ptr = *in;

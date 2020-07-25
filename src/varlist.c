@@ -51,14 +51,21 @@ void varlistAdd(struct varlist * self, char name, int value)
     ++self->size;
 }
 
-int varlistGet(struct varlist * self, char name)
+// Get an item from a varlist, but return a
+// specified default value if not found
+int varlistGetDef(struct varlist * self, char name, int def)
 {
     if (self->size <= 0)
-        return 0;
+        return def;
 
     for (int i = 0; i < self->size; i++)
         if (self->names[i] == name)
             return self->values[i];
 
-    return 0;
+    return def;
+}
+
+int varlistGet(struct varlist * self, char name)
+{
+    varlistGetDef(self, name, 0);
 }

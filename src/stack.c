@@ -28,15 +28,13 @@ int isEmpty(struct stack * pt)
     return pt->top == -1;
 }
 
-int autoSize(struct stack * pt)
+void autoSize(struct stack * pt)
 {
-    if (pt->top > pt->alloc - 1)
+    if (pt->top + 1 > pt->alloc - 1)
     {
         pt->alloc += pt->alloc_size;
         pt->items = realloc(pt->items, pt->alloc * sizeof(int));
     }
-
-    return pt->top == pt->alloc - 1;
 }
 
 void push(struct stack * pt, int x)
