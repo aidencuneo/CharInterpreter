@@ -230,18 +230,6 @@ int main(int argc, char ** argv)
 
     free(args);
 
-    // Push argv (in reverse) and argc to stack
-    for (int i = argc - 1; i >= 0; i--)
-    {
-        // For each argument, push it's entire contents with a null byte separator
-        if (stack->top > -1)
-            push(stack, 0);
-        int arglen = strlen(argv[i]);
-        for (int j = arglen - 1; j >= 0; j--)
-            push(stack, argv[i][j]);
-    }
-    push(stack, argc);
-
     for (int i = 0; i < length; i++)
     {
         char ch = buffer[i];
@@ -339,6 +327,20 @@ int main(int argc, char ** argv)
             push(stack, ch);
         else if (ch == '!')
             ptr = !ptr;
+        else if (ch == '@')
+        {
+            // Push argv (in reverse) and argc to stack
+            for (int i = argc - 1; i >= 0; i--)
+            {
+                // For each argument, push it's entire contents with a null byte separator
+                if (stack->top > -1)
+                    push(stack, 0);
+                int arglen = strlen(argv[i]);
+                for (int j = arglen - 1; j >= 0; j--)
+                    push(stack, argv[i][j]);
+            }
+            push(stack, argc);
+        }
         else if (ch == '+')
         {
             char n = 0;

@@ -4,6 +4,6 @@ f
 :            # while pointer, do:
     p        #   print integer value of pointer
     > aP <   #   hard push pointer, print '\n', hard pop pointer
-    ! q ;    #   if (!pointer) quit
-    /1*      #   decrement pointer
+    ) !?q; ( #   soft push pointer, if (!pointer) quit, soft pop pointer
+    -1+      #   decrement pointer
 ;            # end

@@ -168,7 +168,7 @@ Fi
 # fun execute 1
 Fx
     [=C
-    $C p >aP<
+    $C # p >aP<
 
     # ' :rotarepo' a > Fp
     # $O p >aP<
@@ -195,6 +195,9 @@ Fx
 0=y  # Second argument
 0=o  # Operator (char)
 
+# Get argc and argv
+@
+
 # Clear first two arguments (keep argc in $v)
 <=v
 <:<;
@@ -205,12 +208,14 @@ $@ o
 
 , :
     =c $c
-    > Fw $A ! ? $c > ;
 
-    # if item == '\n'
+    # if isdigit(c)
+    > Fd $A ? $c > ; # > Fw $A ! ? $c > ;
+
+    # if c == '\n'
     $c > a > F= $A ?
         $c > Fx
-        $c=o
+        # $c=o
     ;
 
     # $c P

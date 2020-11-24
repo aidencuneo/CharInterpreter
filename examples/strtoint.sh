@@ -1,9 +1,5 @@
-# Define input function
-g
-    ,:>,;
-;
-
-g  # Get a line of input
+# Get a line of input
+,:>,;
 
 1=b  # base = 1
 0=n  # num  = 0
@@ -21,5 +17,5 @@ g  # Get a line of input
     <
 ;
 
-$n p   # Print number
+$n p  # Print number
 0a P  # Add trailing newline
