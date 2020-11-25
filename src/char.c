@@ -256,6 +256,9 @@ int main(int argc, char ** argv)
         if (comment)
             continue;
 
+        // Debugging
+        // printf("INST: %c\n", ch);
+
         if (scharmode || dcharmode)
             ;
         else if (ch == ';')

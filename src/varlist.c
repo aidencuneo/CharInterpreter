@@ -22,7 +22,7 @@ struct varlist * newVarlist(int block_size)
     return self;
 }
 
-int varlistResize(struct varlist * self)
+void varlistResize(struct varlist * self)
 {
     if (self->size > self->alloc - 1)
     {
@@ -67,5 +67,5 @@ int varlistGetDef(struct varlist * self, char name, int def)
 
 int varlistGet(struct varlist * self, char name)
 {
-    varlistGetDef(self, name, 0);
+    return varlistGetDef(self, name, 0);
 }

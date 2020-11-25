@@ -62,7 +62,7 @@ int pop(struct stack * pt)
     return pt->items[pt->top--];
 }
 
-int pushBottom(struct stack * pt, int x)
+void pushBottom(struct stack * pt, int x)
 {
     autoSize(pt);
 
