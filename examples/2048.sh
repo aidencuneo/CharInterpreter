@@ -16,7 +16,7 @@
 
 # fun printf 1 *
 Fp
-    <=A
+    <=A # len
     $A :
         < P
         $A -1+ =A $A
@@ -128,10 +128,9 @@ FS
     (p 0aP
     1 :
         >
-            $A > 2 ** p >aP< =A
+            $A > 2 ** =A
         <
-        -1+ p
-        >aP<
+        -1+
     ; <
     $A > $s ++ =s
 ;
@@ -145,12 +144,8 @@ FP
     $s p
     0aP
 
-    'olleh' 05 > Fp
-
     '-' 0f7 > Fm 0f7 > Fp
     0aP
-
-    'ollehh' 06 > Fp
 
     # Print the numbers in the boxes
 
