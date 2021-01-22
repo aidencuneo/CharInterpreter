@@ -207,6 +207,9 @@ int main(int argc, char ** argv)
     int mult = 1; // 1 or -1
     file_descriptor = stdin;
 
+    // Was the last if statement's condition true?
+    int last_if_result = 0;
+
     int line = 1;
     int skipping = 0;
     int scope = 0;
@@ -233,6 +236,7 @@ int main(int argc, char ** argv)
     for (int i = 0; i < length; i++)
     {
         char ch = buffer[i];
+        // printf("[%c:%d]\n", ch, last_if_result);
         if (!comment && ch != ' ' && ch != '\n' && ch != '\r' && ch != '#' && verbose)
         {
             printf("\n!%d |%c| > %d (%d) [", skipping, ch, scope, ptr);
@@ -306,7 +310,39 @@ int main(int argc, char ** argv)
                 }
             }
         }
-        else if (ch == '?' || ch == ':')
+        else if (ch == '?')
+        {
+            ++scope;
+            pushToken(ch, i);
+
+            if (skipping > 0)
+            {
+                ++skipping;
+                continue;
+            }
+
+            // Check if this is an elif statement (??), not just (?)
+            char n = 0;
+            if (++i < length)
+                n = buffer[i];
+
+            if (n != '?')
+                --i;
+            // If it is an elif statement, only run if it's
+            // condition is true and if the last if statement's
+            // condition was false
+            else if (last_if_result)
+                ++skipping;
+
+            // Neither an if statement nor an elif statement can run it's code
+            // if the given condition is false
+            if (!ptr)
+                ++skipping;
+
+            // Record the value of this if statement's condition
+            last_if_result = ptr;
+        }
+        else if (ch == ':')
         {
             ++scope;
             pushToken(ch, i);
