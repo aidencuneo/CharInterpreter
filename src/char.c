@@ -514,8 +514,20 @@ int main(int argc, char ** argv)
             filename[ptr] = 0;
 
             file_descriptor = fopen(filename, "r+");
+
+            // ptr will be 0 if the file opened properly
+            ptr = 0;
+
             if (!file_descriptor)
+            {
+                // Set ptr to 1 to tell the code that this file wasn't opened
+                // properly
+                ptr = 1;
+
+                // Set file_descriptor back to stdin to make sure there aren't
+                // any code breaking bugs
                 file_descriptor = stdin;
+            }
         }
         else if (ch == 'p')
             printf("%d", ptr);
