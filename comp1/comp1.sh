@@ -55,6 +55,8 @@ $@ o
 
         # Set n back to 0
         0=n
+
+        # Debugging
         # ' :rotarepo wen eht won si retcarahc sihT' 0aaaa > Fp
         # $o P 0aP
 
@@ -69,18 +71,22 @@ $@ o
     # If this character is a tilde (~), then the character afterwards will
     # become the new operator, so set n to 1
     '~' $c -- !?
-        # 'puY' 3 > FP
         1=n
     ;
 
     # If this character is a newline character (\n), then append the current
     # operator to the end of the output (if there is one)
 
-    $i        !? # Make sure this is allowed
     $c > a -- !?
-    $o         ?
-        $o >
-    ;;;
+        # Only append the operator if operator appending is allowed
+        $i !?
+            $o ? $o > ;
+        ;
+        # If operator appending is disabled, enable it now
+        $i ?
+            0=i
+        ;
+    ;
 
     # If this character is not a special character, append it to the end of
     # the output (as long as it isn't 0)
@@ -89,18 +95,22 @@ $@ o
         $c >
     ;;
 
-    # If operator appending is disabled, enable it again
-    $i ? 0=i ;
-
     # Get next character
     ,
 ;
 
-'eeeedoC' 07 > FP
+# Set file descriptor to the output file
+'txt.tuptuo' # File name
+0a     # Length of file name
+O      # Open the file for writing
+
+# Write text to file
+0 > # Null byte
+'eeeedoC #'
+< : . < ;
+a. # Newline
 
 [ :
-    P
+    .
     [
 ;
-
-0aP

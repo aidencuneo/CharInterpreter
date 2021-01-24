@@ -228,6 +228,9 @@ int main(int argc, char ** argv)
     varlist = newVarlist(16);
     funcs = newVarlist(8);
 
+    // Custom register for supplying a second argument to arithmetic operations
+    int reg_ptr = 0;
+
     int is_defining = 0; // Currently defining a function?
     int ret_index = -1; // Index to return to after function call
 
@@ -368,17 +371,53 @@ int main(int argc, char ** argv)
             ptr = !ptr;
         else if (ch == '@')
         {
-            // Push argv (in reverse) and argc to stack
-            for (int i = argc - 1; i >= 0; i--)
+            // The @ sign will commonly be used as a way to perform complex
+            // operations on the stack with ease
+
+            // You may call them 'stack macros'
+
+            char n = 0;
+            if (++i < length)
+                n = buffer[i];
+
+            if (isspace(n))
+                n = 0;
+
+            if (n == 'c')
             {
-                // For each argument, push it's entire contents with a null byte separator
-                if (stack->top > -1)
-                    push(stack, 0);
-                int arglen = strlen(argv[i]);
-                for (int j = arglen - 1; j >= 0; j--)
-                    push(stack, argv[i][j]);
+                // Count the number of times the pointer is found in the stack
+                int c = 0;
+
+                for (int a = 0; a <= stack->top; a++)
+                    if (stack->items[a] == ptr)
+                        ++c;
+
+                // Set the pointer to the result
+                ptr = c;
             }
-            push(stack, argc);
+            else if (n == 's')
+                // Set the top of the stack to the pointer
+                if (ptr < -1)
+                    stack->top = -1;
+                else
+                    stack->top = ptr;
+            else
+            {
+                // Push argv (in reverse) and argc to stack
+                for (int a = argc - 1; a >= 0; a--)
+                {
+                    // For each argument, push it's entire contents with a null byte separator
+                    if (stack->top > -1)
+                        push(stack, 0);
+                    int arglen = strlen(argv[a]);
+                    for (int b = arglen - 1; b >= 0; b--)
+                        push(stack, argv[a][b]);
+                }
+
+                push(stack, argc);
+
+                --i;
+            }
         }
         else if (ch == '+')
         {
@@ -387,7 +426,7 @@ int main(int argc, char ** argv)
                 n = buffer[i];
 
             if (n == '+')
-                ptr += pop(stack);
+                ptr += reg_ptr;
             else
             {
                 mult = 1;
@@ -401,7 +440,7 @@ int main(int argc, char ** argv)
                 n = buffer[i];
 
             if (n == '-')
-                ptr -= pop(stack);
+                ptr -= reg_ptr;
             else
             {
                 mult = -1;
@@ -415,7 +454,7 @@ int main(int argc, char ** argv)
                 n = buffer[i];
 
             if (n == '*')
-                ptr *= pop(stack);
+                ptr *= reg_ptr;
             else
             {
                 mult = ptr;
@@ -429,7 +468,7 @@ int main(int argc, char ** argv)
                 n = buffer[i];
 
             if (n == '/')
-                ptr /= pop(stack);
+                ptr /= reg_ptr;
             else
                 --i;
         }
@@ -535,7 +574,7 @@ int main(int argc, char ** argv)
             ptr += mult * 14;
         else if (ch == 'f')
             ptr += mult * 15;
-        else if (ch == 'o')
+        else if (ch == 'o' || ch == 'O')
         {
             if (file_descriptor != stdin)
                 fclose(file_descriptor);
@@ -549,7 +588,12 @@ int main(int argc, char ** argv)
             }
             filename[ptr] = 0;
 
-            file_descriptor = fopen(filename, "r+");
+            // Open file for reading if lowercase 'o' was used, or open file
+            // for writing if uppercase 'O' was used
+            if (ch == 'o')
+                file_descriptor = fopen(filename, "r+");
+            else if (ch == 'O')
+                file_descriptor = fopen(filename, "w+");
 
             // ptr will be 0 if the file opened properly
             ptr = 0;
@@ -565,6 +609,10 @@ int main(int argc, char ** argv)
                 file_descriptor = stdin;
             }
         }
+        else if (ch == 'r')
+            reg_ptr = ptr;
+        else if (ch == 'R')
+            ptr = reg_ptr;
         else if (ch == 'p')
             printf("%d", ptr);
         else if (ch == 'P')
@@ -592,6 +640,10 @@ int main(int argc, char ** argv)
             char in[2] = {0};
             fgets(in, 2, file_descriptor);
 
+            // If pesky carriage returns are in the way in a file, skip them
+            while (file_descriptor != stdin && *in == '\r')
+                fgets(in, 2, file_descriptor);
+
             if (file_descriptor == stdin && (
                 *in == '\n' || *in == '\r' || *in < 0)
             )
@@ -599,10 +651,19 @@ int main(int argc, char ** argv)
             else
                 ptr = *in;
         }
-        else if (ch == 'q')
+        else if (ch == '.')
         {
-            quit(ptr);
+            if (file_descriptor == stdin)
+                printf("%c", ptr);
+            else
+            {
+                char in[2] = {0};
+                in[0] = ptr;
+                fputs(in, file_descriptor);
+            }
         }
+        else if (ch == 'q')
+            quit(ptr);
     }
 
     quit(0);
