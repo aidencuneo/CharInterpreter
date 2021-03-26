@@ -1,10 +1,14 @@
 # See code_styling.txt for code styling information
 
+# Injections:
+# (/examples/memory.sh)
+Fs0@c=A0>;Fg<=A0@c=B$@-1+=C0=D0=E$@-2+@s$B-1+=B$Br1$A--!?1=D;(1:-1+=c$D?$c?$@-1+=S$C@s$c>$S@s$C1=C;;$c!?$D?1=E;$D!?$B-1+=B$Br1$A--!?1=D;;;$@-2+@s$@?$E!?(1;;;$C@s;Fd<=A0@c=B$@-1+=C0=D0=E$@-2+@s$B-1+=B$Br1$A--!?1=D;(1:-1+=c$D?$c?<0ff2r12************-1+>;;$c!?$D?1=E;$D!?$B-1+=B$Br1$A--!?1=D;;;$@-2+@s$@?$E!?(1;;;$C@s;
+
 # fun printf 1 *
 Fp
     <=A
     $A :
-        <P
+        < P
         $A -1+ =A $A
     ;
 ;
@@ -12,7 +16,8 @@ Fp
 # fun println 1 *
 FP
     Fp
-    0aP0
+    0aP
+    0
 ;
 
 # Current operator
@@ -49,7 +54,7 @@ $@ o
         $c=o
 
         # If this character is a tilde (~), set the operator back to 0
-        '~' $c -- !? # a > $c -- !?
+        $c r1 '~' < -- !? # $c r1 a -- !?
             0=o
         ;
 
@@ -70,14 +75,14 @@ $@ o
 
     # If this character is a tilde (~), then the character afterwards will
     # become the new operator, so set n to 1
-    '~' $c -- !?
+    $c r1 '~' < -- !?
         1=n
     ;
 
     # If this character is a newline character (\n), then append the current
     # operator to the end of the output (if there is one)
 
-    $c > a -- !?
+    $c r1 a -- !?
         # Only append the operator if operator appending is allowed
         $i !?
             $o ? $o > ;
@@ -90,7 +95,7 @@ $@ o
 
     # If this character is not a special character, append it to the end of
     # the output (as long as it isn't 0)
-    '~' $c -- ?
+    $c r1 '~' < -- ?
     $c        ?
         $c >
     ;;
@@ -106,7 +111,8 @@ O      # Open the file for writing
 
 # Write text to file
 0 > # Null byte
-'eeeedoC #'
+# (See /examples/memory.sh for this code)
+';s@C$;;;1(?!E$?@$s@+2-@$;;;D=1?!--A$1rB$B=+1-B$?!D$;E=1?D$?!c$;;>+1-************21r2ff0<?c$?D$c=+1-:1(;D=1?!--A$1rB$B=+1-B$s@+2-@$E=0D=0C=+1-@$B=c@0A=<dF;s@C$;;;1(?!E$?@$s@+2-@$;;;D=1?!--A$1rB$B=+1-B$?!D$;E=1?D$?!c$;;C=1C$s@S$>c$s@C$S=+1-@$?c$?D$c=+1-:1(;D=1?!--A$1rB$B=+1-B$s@+2-@$E=0D=0C=+1-@$B=c@0A=<gF;>0A=c@0sF'
 < : . < ;
 a. # Newline
 

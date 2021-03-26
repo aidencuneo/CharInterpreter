@@ -13,6 +13,7 @@ char * current_file;
 char * buffer = 0;
 
 struct stack * stack;
+struct varlist * registers;
 struct varlist * varlist;
 struct varlist * funcs;
 FILE *  file_descriptor;
@@ -225,11 +226,9 @@ int main(int argc, char ** argv)
     tokeninds_len = 0;
 
     // Custom variables
+    registers = newVarlist(32);
     varlist = newVarlist(16);
     funcs = newVarlist(8);
-
-    // Custom register for supplying a second argument to arithmetic operations
-    int reg_ptr = 0;
 
     int is_defining = 0; // Currently defining a function?
     int ret_index = -1; // Index to return to after function call
@@ -369,6 +368,10 @@ int main(int argc, char ** argv)
             push(stack, ch);
         else if (ch == '!')
             ptr = !ptr;
+        else if (ch == '&')
+            ptr = ptr && varlistGet(registers, '1');
+        else if (ch == '|')
+            ptr = ptr || varlistGet(registers, '1');
         else if (ch == '@')
         {
             // The @ sign will commonly be used as a way to perform complex
@@ -426,7 +429,7 @@ int main(int argc, char ** argv)
                 n = buffer[i];
 
             if (n == '+')
-                ptr += reg_ptr;
+                ptr += varlistGet(registers, '1');
             else
             {
                 mult = 1;
@@ -440,7 +443,7 @@ int main(int argc, char ** argv)
                 n = buffer[i];
 
             if (n == '-')
-                ptr -= reg_ptr;
+                ptr -= varlistGet(registers, '1');
             else
             {
                 mult = -1;
@@ -454,7 +457,7 @@ int main(int argc, char ** argv)
                 n = buffer[i];
 
             if (n == '*')
-                ptr *= reg_ptr;
+                ptr *= varlistGet(registers, '1');
             else
             {
                 mult = ptr;
@@ -468,7 +471,7 @@ int main(int argc, char ** argv)
                 n = buffer[i];
 
             if (n == '/')
-                ptr /= reg_ptr;
+                ptr /= varlistGet(registers, '1');
             else
                 --i;
         }
@@ -482,10 +485,8 @@ int main(int argc, char ** argv)
                 n = 0;
 
             if (!n)
-            {
-                --i;
-                continue;
-            }
+                error("'=' keyword requires a variable name to store into (example: =n)",
+                    buffer, i - 1);
 
             varlistAdd(varlist, n, ptr);
             ptr = 0;
@@ -498,6 +499,10 @@ int main(int argc, char ** argv)
 
             if (isspace(n))
                 n = 0;
+
+            if (!n)
+                error("'$' keyword requires a variable name to retrieve from (example: $n)",
+                    buffer, i - 1);
 
             if (n == '@')
                 ptr = stack->top + 1;
@@ -514,10 +519,8 @@ int main(int argc, char ** argv)
                 n = 0;
 
             if (!n)
-            {
-                error("'F' keyword requires a trailing character to "
-                    "specify function name to define or call", buffer, i - 1);
-            }
+                error("'F' keyword requires a function name to define or call (example: Fn)",
+                    buffer, i - 1);
 
             ++scope;
             pushToken(ch, i + 1);
@@ -610,9 +613,36 @@ int main(int argc, char ** argv)
             }
         }
         else if (ch == 'r')
-            reg_ptr = ptr;
+        {
+            char n = 0;
+            if (++i < length)
+                n = buffer[i];
+
+            if (isspace(n))
+                n = 0;
+
+            if (!n)
+                error("'r' keyword requires a register name to store into (example: r1)",
+                    buffer, i - 1);
+
+            varlistAdd(registers, n, ptr);
+            ptr = 0;
+        }
         else if (ch == 'R')
-            ptr = reg_ptr;
+        {
+            char n = 0;
+            if (++i < length)
+                n = buffer[i];
+
+            if (isspace(n))
+                n = 0;
+
+            if (!n)
+                error("'R' keyword requires a register name to retrieve from (example: R1)",
+                    buffer, i - 1);
+
+            ptr = varlistGet(registers, n);
+        }
         else if (ch == 'p')
             printf("%d", ptr);
         else if (ch == 'P')
