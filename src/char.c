@@ -203,7 +203,7 @@ int main(int argc, char ** argv)
     }
 
     // Interpreter vars
-    stack = newStack(512); // Block size is 256
+    stack = newStack(512); // Block size is 512
     int ptr = 0;
     int mult = 1; // 1 or -1
     file_descriptor = stdin;
