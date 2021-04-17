@@ -695,6 +695,19 @@ int main(int argc, char ** argv)
             printf("%d", ptr);
         else if (ch == 'P')
             printf("%c", ptr);
+        // Print string from memory with ptr as the pointer
+        else if (ch == 'C')
+        {
+            for (int p = ptr ;; p++)
+            {
+                int c = vmemGet(vmem, p);
+
+                if (!c)
+                    break;
+
+                printf("%c", c);
+            }
+        }
         else if (ch == '<')
             ptr = stackPop(stack);
         else if (ch == '>')
