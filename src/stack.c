@@ -23,12 +23,12 @@ int stackSize(struct stack * pt)
     return pt->top + 1;
 }
 
-int isEmpty(struct stack * pt)
+int stackIsEmpty(struct stack * pt)
 {
     return pt->top == -1;
 }
 
-void autoSize(struct stack * pt)
+void stackAutoSize(struct stack * pt)
 {
     if (pt->top + 1 > pt->alloc - 1)
     {
@@ -37,45 +37,45 @@ void autoSize(struct stack * pt)
     }
 }
 
-void push(struct stack * pt, int x)
+void stackPush(struct stack * pt, int x)
 {
-    autoSize(pt);
+    stackAutoSize(pt);
 
     pt->items[++pt->top] = x;
 }
 
-int peek(struct stack * pt)
+int stackPeek(struct stack * pt)
 {
-    if (!isEmpty(pt))
-        return pt->items[pt->top];
+    if (stackIsEmpty(pt))
+        return 0;
 
-    return 0;
+    return pt->items[pt->top];
 }
 
-int pop(struct stack * pt)
+int stackPop(struct stack * pt)
 {
-    autoSize(pt);
+    stackAutoSize(pt);
 
-    if (isEmpty(pt))
+    if (stackIsEmpty(pt))
         return 0;
 
     return pt->items[pt->top--];
 }
 
-void pushBottom(struct stack * pt, int x)
+void stackPushBottom(struct stack * pt, int x)
 {
-    autoSize(pt);
+    stackAutoSize(pt);
 
     for (int i = ++pt->top; i >= 0; i--)
         pt->items[i] = pt->items[i - 1];
     pt->items[0] = x;
 }
 
-int popBottom(struct stack * pt)
+int stackPopBottom(struct stack * pt)
 {
-    autoSize(pt);
+    stackAutoSize(pt);
 
-    if (isEmpty(pt))
+    if (stackIsEmpty(pt))
         return 0;
 
     int ptr = pt->items[0];

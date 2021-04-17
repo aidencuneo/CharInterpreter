@@ -5,6 +5,7 @@
 
 #include "char.h"
 
+#include "vmem.c"
 #include "stack.c"
 #include "varlist.c"
 #include "var.c"
@@ -12,6 +13,7 @@
 char * current_file;
 char * buffer = 0;
 
+struct vmem * vmem;
 struct stack * stack;
 struct varlist * registers;
 struct varlist * varlist;
@@ -203,6 +205,7 @@ int main(int argc, char ** argv)
     }
 
     // Interpreter vars
+    vmem = newVMem(1024); // Block size is 1024
     stack = newStack(512); // Block size is 512
     int ptr = 0;
     int mult = 1; // 1 or -1
@@ -210,6 +213,9 @@ int main(int argc, char ** argv)
 
     // Was the last if statement's condition true?
     int last_if_result = 0;
+
+    // This is for saving the pointers of strings in memory
+    int last_str_ptr = 0;
 
     int line = 1;
     int skipping = 0;
@@ -358,20 +364,50 @@ int main(int argc, char ** argv)
             if (!ptr)
                 ++skipping;
         }
+
         if (ch == '\'' && !dcharmode)
+        {
+            // If end of string, add null byte and save pointer to ptr
+            if (scharmode)
+            {
+                vmemAdd(vmem, 0);
+                ptr = last_str_ptr;
+            }
+            // If beginning of string, save this string's pointer for later
+            else
+                last_str_ptr = vmem->size;
+
             scharmode = !scharmode;
+        }
+
         else if (ch == '"' && !scharmode)
+        {
+            // If end of string, add null byte and save pointer to ptr
+            if (dcharmode)
+            {
+                vmemAdd(vmem, 0);
+                ptr = last_str_ptr;
+            }
+            // If beginning of string, save this string's pointer for later
+            else
+                last_str_ptr = vmem->size;
+
             dcharmode = !dcharmode;
+        }
+
         else if (skipping)
             continue;
+
+        // Add bytes of string to memory in string mode
         else if (scharmode || dcharmode)
-            push(stack, ch);
+            vmemAdd(vmem, ch);
+
         else if (ch == '!')
             ptr = !ptr;
         else if (ch == '&')
-            ptr = ptr && varlistGet(registers, '1');
+            ptr = ptr && varlistGet(registers, '0');
         else if (ch == '|')
-            ptr = ptr || varlistGet(registers, '1');
+            ptr = ptr || varlistGet(registers, '0');
         else if (ch == '@')
         {
             // The @ sign will commonly be used as a way to perform complex
@@ -406,18 +442,25 @@ int main(int argc, char ** argv)
                     stack->top = ptr;
             else
             {
-                // Push argv (in reverse) and argc to stack
+                // Add argv to memory and push a pointer to each argument into the stack
                 for (int a = argc - 1; a >= 0; a--)
                 {
                     // For each argument, push it's entire contents with a null byte separator
-                    if (stack->top > -1)
-                        push(stack, 0);
                     int arglen = strlen(argv[a]);
-                    for (int b = arglen - 1; b >= 0; b--)
-                        push(stack, argv[a][b]);
+
+                    // Make sure to save the pointer to this argument into the stack
+                    int ptr = vmem->size;
+
+                    // Add the string to memory
+                    for (int b = 0; b < arglen - 1; b++)
+                        vmemAdd(vmem, argv[a][b]);
+
+                    // Push the pointer to the stack
+                    stackPush(stack, ptr);
                 }
 
-                push(stack, argc);
+                // Push argc to stack
+                stackPush(stack, argc);
 
                 --i;
             }
@@ -429,7 +472,7 @@ int main(int argc, char ** argv)
                 n = buffer[i];
 
             if (n == '+')
-                ptr += varlistGet(registers, '1');
+                ptr += varlistGet(registers, '0');
             else
             {
                 mult = 1;
@@ -443,7 +486,7 @@ int main(int argc, char ** argv)
                 n = buffer[i];
 
             if (n == '-')
-                ptr -= varlistGet(registers, '1');
+                ptr -= varlistGet(registers, '0');
             else
             {
                 mult = -1;
@@ -457,7 +500,7 @@ int main(int argc, char ** argv)
                 n = buffer[i];
 
             if (n == '*')
-                ptr *= varlistGet(registers, '1');
+                ptr *= varlistGet(registers, '0');
             else
             {
                 mult = ptr;
@@ -471,7 +514,7 @@ int main(int argc, char ** argv)
                 n = buffer[i];
 
             if (n == '/')
-                ptr /= varlistGet(registers, '1');
+                ptr /= varlistGet(registers, '0');
             else
                 --i;
         }
@@ -585,7 +628,7 @@ int main(int argc, char ** argv)
             char * filename = malloc(ptr + 1);
             for (int i = 0; i < ptr; i++)
             {
-                filename[i] = pop(stack);
+                filename[i] = stackPop(stack);
                 if (!filename[i])
                     break;
             }
@@ -622,11 +665,10 @@ int main(int argc, char ** argv)
                 n = 0;
 
             if (!n)
-                error("'r' keyword requires a register name to store into (example: r1)",
+                error("'r' keyword requires a register name to retrieve from (example: r1)",
                     buffer, i - 1);
 
-            varlistAdd(registers, n, ptr);
-            ptr = 0;
+            ptr = varlistGet(registers, n);
         }
         else if (ch == 'R')
         {
@@ -638,31 +680,37 @@ int main(int argc, char ** argv)
                 n = 0;
 
             if (!n)
-                error("'R' keyword requires a register name to retrieve from (example: R1)",
+                error("'R' keyword requires a register name to store into (example: R1)",
                     buffer, i - 1);
 
-            ptr = varlistGet(registers, n);
+            varlistAdd(registers, n, ptr);
         }
+        // Retrieve memory using ptr as the pointer
+        else if (ch == 'm')
+            ptr = vmemGet(vmem, ptr);
+        // Add ptr to memory (on top)
+        else if (ch == 'M')
+            vmemAdd(vmem, ptr);
         else if (ch == 'p')
             printf("%d", ptr);
         else if (ch == 'P')
             printf("%c", ptr);
         else if (ch == '<')
-            ptr = pop(stack);
+            ptr = stackPop(stack);
         else if (ch == '>')
         {
-            push(stack, ptr);
+            stackPush(stack, ptr);
             ptr = 0;
         }
         else if (ch == '(')
-            ptr = peek(stack);
+            ptr = stackPeek(stack);
         else if (ch == ')')
-            push(stack, ptr);
+            stackPush(stack, ptr);
         else if (ch == '[')
-            ptr = popBottom(stack);
+            ptr = stackPopBottom(stack);
         else if (ch == ']')
         {
-            pushBottom(stack, ptr);
+            stackPushBottom(stack, ptr);
             ptr = 0;
         }
         else if (ch == ',')
