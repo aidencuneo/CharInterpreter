@@ -52,142 +52,12 @@ Fd
     $R=A
 ;
 
-# fun printf 1 *
-Fp
-    <=A
-    $A :
-        <P
-        $A -1+ =A $A
-    ;
-;
-
-# fun println 1 *
-FP
-    Fp
-    0aP0
-;
-
-# fun cmp_eq 2 : 1
-F=
-    <-- ! =A
-;
-
-# fun peek_index 1 : 1
-# (Get the stack item with the given index)
-F(
-    0=A
-    <=I
-
-    $I=B
-    $B :
-        [ >
-        $B -1+ =B $B
-    ;
-
-    [)=A
-
-    $I+1=B
-    $B :
-        < ]
-        $B -1+ =B $B
-    ;
-;
-
-# fun pop_index 1 : 1
-# (Pop the stack item with the given index)
-F<
-    0=A
-    <=I
-
-    $I=B
-    $B :
-        [ >
-        $B -1+ =B $B
-    ;
-
-    [=A
-
-    $I=B
-    $B :
-        < ]
-        $B -1+ =B $B
-    ;
-;
-
-# fun shuffle_index 1
-# (Shuffle the stack so that all items starting
-#  from 0 up until the given index are pushed
-#  to the top)
-Fs
-    <=I
-
-    $I=B
-    $B :
-        [ >
-        $B -1+ =B $B
-    ;
-;
-
-# fun to_int 1 : 1
-Fi
-    0=N
-    1=B
-
-    <=I
-    $I :
-        <=D
-        $D > Fd $A ?
-            $D
-            '0'--
-            > $B ** > $N ++ ) =N <
-            # '0'++
-
-            > $B > a** =B <  # base *= 10
-        ;
-
-        $I -1+ =I $I
-    ;
-
-    $N=A
-;
-
-# fun execute 1
-Fx
-    [=C
-    $C # p >aP<
-
-    # ' :rotarepo' a > Fp
-    # $O p >aP<
-
-    $C > Fd $A ?
-        # 'REGETNI' 7 > FP
-        $C ]
-        $@ > Fi $A
-        # p >aP<
-
-        >  # Save number for later
-
-        # If there is an operator in this line, use it
-        $o > '+' F= $A ?
-            $x ++ >
-            =o  # Reset operator
-        ;
-
-        <=x
-    ;
-;
-
-0=x  # First argument
-0=y  # Second argument
-0=o  # Operator (char)
-
 # Get argc and argv
 @
 
 # Clear first two arguments (keep argc in $v)
 <=v
-<:<;
-<:<;
+<<
 
 # Open file
 $@ o
@@ -200,8 +70,7 @@ $@ o
 
     # if c == '\n'
     $c > a > F= $A ?
-        $c > Fx
-        # $c=o
+
     ;
 
     # $c P

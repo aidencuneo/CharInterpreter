@@ -247,11 +247,19 @@ int main(int argc, char ** argv)
         // printf("[%c:%d]\n", ch, last_if_result);
         if (!comment && ch != ' ' && ch != '\n' && ch != '\r' && ch != '#' && verbose)
         {
-            printf("\n!%d |%c| > %d (%d) [", skipping, ch, scope, ptr);
+            printf("\n!%d |%c| > %d (%d) stack=[", skipping, ch, scope, ptr);
             for (int a = 0; a < stack->top + 1; a++)
                 printf("%d,", stack->items[a]);
             if (stack->top + 1)
                 printf("\b");
+            printf("] mem=[");
+            for (int a = 0; a < vmem->size; a++)
+            {
+                if (!vmem->items[a])
+                    printf("\\0");
+                else
+                    printf("%c", vmem->items[a]);
+            }
             printf("]\n");
         }
 
@@ -408,6 +416,10 @@ int main(int argc, char ** argv)
             ptr = ptr && varlistGet(registers, '0');
         else if (ch == '|')
             ptr = ptr || varlistGet(registers, '0');
+        else if (ch == '{')
+            ptr = ptr < varlistGet(registers, '0');
+        else if (ch == '}')
+            ptr = ptr > varlistGet(registers, '0');
         else if (ch == '@')
         {
             // The @ sign will commonly be used as a way to perform complex
@@ -452,8 +464,10 @@ int main(int argc, char ** argv)
                     int ptr = vmem->size;
 
                     // Add the string to memory
-                    for (int b = 0; b < arglen - 1; b++)
+                    for (int b = 0; b < arglen; b++)
                         vmemAdd(vmem, argv[a][b]);
+                    // Add null byte
+                    vmemAdd(vmem, 0);
 
                     // Push the pointer to the stack
                     stackPush(stack, ptr);
@@ -625,14 +639,23 @@ int main(int argc, char ** argv)
             if (file_descriptor != stdin)
                 fclose(file_descriptor);
 
-            char * filename = malloc(ptr + 1);
-            for (int i = 0; i < ptr; i++)
+            // For now, filenames must be 1024 characters or less
+            char * filename = malloc(1024 + 1);
+            int len = 0;
+
+            int p;
+            for (p = ptr ;; p++)
             {
-                filename[i] = stackPop(stack);
-                if (!filename[i])
+                filename[len] = vmemGet(vmem, p);
+
+                if (!filename[len])
                     break;
+
+                // Increment filename len
+                ++len;
             }
-            filename[ptr] = 0;
+
+            // (Null byte already appended)
 
             // Open file for reading if lowercase 'o' was used, or open file
             // for writing if uppercase 'O' was used
@@ -651,7 +674,7 @@ int main(int argc, char ** argv)
                 ptr = 1;
 
                 // Set file_descriptor back to stdin to make sure there aren't
-                // any code breaking bugs
+                // any major bugs
                 file_descriptor = stdin;
             }
         }
@@ -685,9 +708,53 @@ int main(int argc, char ** argv)
 
             varlistAdd(registers, n, ptr);
         }
-        // Retrieve memory using ptr as the pointer
+        // Useful memory things
         else if (ch == 'm')
-            ptr = vmemGet(vmem, ptr);
+        {
+            char n = 0;
+            if (++i < length)
+                n = buffer[i];
+
+            // Set ptr to the current memory size
+            if (n == 's')
+                ptr = vmem->size;
+            // Print string from memory using ptr as the pointer
+            else if (n == 'P')
+            {
+                for (int p = ptr ;; p++)
+                {
+                    int c = vmemGet(vmem, p);
+
+                    if (!c)
+                        break;
+
+                    printf("%c", c);
+                }
+            }
+            // Write string to file from memory using ptr as the pointer
+            else if (n == '.')
+            {
+                for (int p = ptr ;; p++)
+                {
+                    int c = vmemGet(vmem, p);
+
+                    if (!c)
+                        break;
+
+                    if (file_descriptor == stdin)
+                        printf("%c", c);
+                    else
+                    {
+                        char in[2] = {0};
+                        in[0] = c;
+                        fputs(in, file_descriptor);
+                    }
+                }
+            }
+            else
+                // Retrieve memory using ptr as the pointer
+                ptr = vmemGet(vmem, ptr);
+        }
         // Add ptr to memory (on top)
         else if (ch == 'M')
             vmemAdd(vmem, ptr);
@@ -695,19 +762,6 @@ int main(int argc, char ** argv)
             printf("%d", ptr);
         else if (ch == 'P')
             printf("%c", ptr);
-        // Print string from memory with ptr as the pointer
-        else if (ch == 'C')
-        {
-            for (int p = ptr ;; p++)
-            {
-                int c = vmemGet(vmem, p);
-
-                if (!c)
-                    break;
-
-                printf("%c", c);
-            }
-        }
         else if (ch == '<')
             ptr = stackPop(stack);
         else if (ch == '>')

@@ -27,7 +27,7 @@
     ,
 ; M
 
-# Equal? Starts true
+# Equal? (Starts true)
 1=E
 
 # Compare string equality

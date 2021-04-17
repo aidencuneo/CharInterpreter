@@ -1,0 +1,15 @@
+set 9
+
+while
+    push
+
+    ch a
+    printc
+
+    pop
+
+    sub 1
+end
+
+set a
+printc
