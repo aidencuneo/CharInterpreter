@@ -15,7 +15,6 @@ Fx
     $S m R0 0ff5 -- !?
         # Increment pointer until it reaches the end of this string
         $S m :
-            P
             $S 1 =S $S m
         ;
     ;
@@ -24,80 +23,119 @@ Fx
 
     # 'push'
     $S > rA > F= ?
-        # Add ')' to compiled data
+        # ')'
         0ffb M
     ;
 
     # 'pop'
     $S > rB > F= ?
-        # Add '<' to compiled data
+        # '<'
         0ffff M
     ;
 
     # 'if'
     $S > rC > F= ?
-        # Add '?' to compiled data
+        # '?'
         0ffff3 M
     ;
 
     # 'while'
     $S > rD > F= ?
-        # Add ':' to compiled data
+        # ':'
         0fffd M
     ;
 
     # 'end'
     $S > rE > F= ?
-        # Add ';' to compiled data
+        # ';'
         0fffe M
     ;
 
     # 'memadd'
     $S > rF > F= ?
-        # Add 'M' to compiled data
+        # 'M'
         0fffff2 M
     ;
 
     # 'memget'
     $S > rG > F= ?
-        # Add 'm' to compiled data
+        # 'm'
         0fffffff4 M
     ;
 
-    # 'printd'
-    $S > rH > F= ?
-        # Add 'p' to compiled data
-        0fffffff7 M
+    # 'print '
+    $S > rH > Fs ?
+        # 'print d'
+        $S 6 m R0 0ffffffa -- !?
+            # 'p'
+            0fffffff7 M
+        ;
+
+        # 'print c'
+        $S 6 m R0 0ffffff9 -- !?
+            # 'P'
+            0fffff5 M
+        ;
+
+        # 'print s'
+        $S 6 m R0 0fffffffa -- !?
+            # 'm'
+            0fffffff4 M
+            # 'P'
+            0fffff5 M
+        ;
     ;
 
-    # 'printc'
-    $S > rI > F= ?
-        # Add 'P' to compiled data
-        0fffff5 M
-    ;
+    # 'println '
+    $S > rI > Fs ?
+        # 'println d'
+        $S 8 m R0 0ffffffa -- !?
+            # 'p'
+            0fffffff7 M
+        ;
 
-    # 'printf'
-    $S > rJ > F= ?
-        # Add 'm' to compiled data
-        0fffffff4 M
-        # Add 'P' to compiled data
+        # 'println c'
+        $S 8 m R0 0ffffff9 -- !?
+            # 'P'
+            0fffff5 M
+        ;
+
+        # 'println s'
+        $S 8 m R0 0fffffffa -- !?
+            # 'm'
+            0fffffff4 M
+            # 'P'
+            0fffff5 M
+        ;
+
+        # println is exactly the same as print, but `>aP<` is pushed to the
+        # end to suffix a newline
+
+        # '>'
+        0ffff2 M
+        # 'a'
+        0ffffff7 M
+        # 'P'
         0fffff5 M
+        # '<'
+        0ffff M
     ;
 
     # 'set'
     $S > rK > Fs ?
-        # Add '0' to compiled data
+        # '0'
         0fff3 M
-        # Add the number after 'set ' (including the space) to compiled data
+        # Add the number after 'set ' (including the space)
+        # (convert to integer, then save as a Char num)
         # 'set num'
-        $S 4 m M
+        $S 4 > FI > Fi
     ;
 
     # 'ch'
     $S > rL > Fs ?
-        # Add '0' to compiled data
+        # '0'
         0fff3 M
-        # Add the number after 'ch ' (including the space) to compiled data
+        # Add the number after 'ch ' (including the space)
         # (as a Char num)
         # 'ch num'
         $S 3 m > Fi
@@ -105,25 +143,116 @@ Fx
 
     # 'add'
     $S > rM > Fs ?
-        # Add the number after 'add ' (including the space) to compiled data
+        # Add the number after 'add ' (including the space)
         # 'add num'
         $S 4 m M
     ;
 
     # 'sub'
     $S > rN > Fs ?
-        # Add '-' to compiled data
+        # '-'
         0fff M
-        # Add the number after 'sub ' (including the space) to compiled data
+        # Add the number after 'sub ' (including the space)
         # 'sub num'
         $S 4 m M
-        # Add '+' to compiled data
+        # '+'
         0ffd M
+    ;
+
+    # 'mul'
+    $S > rO > Fs ?
+        # '*'
+        0ffc M
+        # '0'
+        0fff3 M
+        # Add the number after 'mul ' (including the space)
+        # 'mul num'
+        $S 4 m M
+        # '+'
+        0ffd M
+    ;
+
+    # 'div'
+    $S > rP > Fs ?
+        # '>'
+        0ffff2 M
+        # Add the number after 'div ' (including the space)
+        # 'div num'
+        $S 4 m M
+        # 'R'
+        0fffff7 M
+        # '0'
+        0fff3 M
+        # '<'
+        0ffff M
+        # '//'
+        0fff2 MM
+    ;
+
+    # 'exit'
+    $S > rQ > F= ?
+        # 'q'
+        0fffffff4 M
+    ;
+
+    # 'setvar'
+    $S > rR > Fs ?
+        # '='
+        0ffff1 M
+        # Add the letter after 'setvar ' (including the space)
+        $S 7 m M
+    ;
+
+    # 'setreg'
+    $S > rS > Fs ?
+        # 'R'
+        0fffff7 M
+        # Add the letter after 'setreg ' (including the space)
+        $S 7 m M
+    ;
+
+    # 'getvar'
+    $S > rT > Fs ?
+        # '$'
+        0ff6 M
+        # Add the letter after 'getvar ' (including the space)
+        $S 7 m M
+    ;
+
+    # 'getreg'
+    $S > rU > Fs ?
+        # 'r'
+        0fffffff9 M
+        # Add the letter after 'getreg ' (including the space)
+        $S 7 m M
+    ;
+
+    # 'define'
+    $S > rV > Fs ?
+        # 'F'
+        0ffffa M
+        # Add the letter after 'define ' (including the space)
+        $S 7 m M
+    ;
+
+    # 'call'
+    $S > rW > Fs ?
+        # Function calling differs from function defining in that the pointer
+        # is saved to the stack and retrieved from the stack before and after
+        # function calling, respectively.
+
+        # '>'
+        0ffff2 M
+        # 'F'
+        0ffffa M
+        # Add the letter after 'call ' (including the space)
+        $S 5 m M
+        # '<'
+        0ffff M
     ;
 
     # Increment pointer until it reaches the next string in the list
     $S m :
-        P
         $S 1 =S $S m
     ;
 
@@ -171,9 +300,8 @@ Fs
     # r2 is string to check prefix against
 
     # Save both string pointers to r1 and r2
-    < mP R1
-    < mP R2
-    0aP
+    < R1
+    < R2
 
     # Equal? (Starts true)
     01=E
@@ -262,6 +390,49 @@ Fi
     ;
 ;
 
+# fun toint 1
+FI
+    # Convert a string pointer to an integer
+
+    # Multiplier
+    01=M
+
+    # Pointer
+    <=A
+
+    # Result num
+    0=B
+
+    # Start pointer
+    $A=C
+
+    # Increment A until a null byte is reached
+    $A m :
+        $A 1 =A
+        $A m
+    ;
+
+    # Decrement A once
+    $A -1+ =A
+
+    # While A > C - 1 (A >= C)
+    $C -1+ R0 $A } :
+        # B += (*A - '0') * M
+        $A m -fff3+ R0 $M ** R0 $B ++ =B
+
+        # M *= 10
+        $M R0 0a ** =M
+
+        # Decrement A
+        $A -1+ =A
+
+        # Loop condition
+        $C -1+ R0 $A }
+    ;
+
+    $B
+;
+
 # Get argc and argv
 @
 
@@ -276,20 +447,29 @@ Fi
 ? q ;
 
 # Save a whole heap of strings for later
-'push'   RA
-'pop'    RB
-'if'     RC
-'while'  RD
-'end'    RE
-'memadd' RF
-'memget' RG
-'printd' RH
-'printc' RI
-'printf' RJ
-'set '   RK
-'ch '    RL
-'add '   RM
-'sub '   RN
+'push'     RA
+'pop'      RB
+'if'       RC
+'while'    RD
+'end'      RE
+'memadd'   RF
+'memget'   RG
+'print '   RH
+'println ' RI
+0          RJ
+'set '     RK
+'ch '      RL
+'add '     RM
+'sub '     RN
+'mul '     RO
+'div '     RP
+'exit'     RQ
+'setvar '  RR
+'setreg '  RS
+'getvar '  RT
+'getreg '  RU
+'define '  RV
+'call '    RW
 
 # Pointer to tokenised code
 ms >

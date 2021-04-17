@@ -546,7 +546,6 @@ int main(int argc, char ** argv)
                     buffer, i - 1);
 
             varlistAdd(varlist, n, ptr);
-            ptr = 0;
         }
         else if (ch == '$')
         {

@@ -1,15 +1,17 @@
-set 9
+define a
+    set 567
+    println d
+
+    set 124
+    println d
+end
+
+set 20
 
 while
-    push
-
-    ch a
-    printc
-
-    pop
-
+    call a
     sub 1
 end
 
-set a
-printc
+set 0
+println c
