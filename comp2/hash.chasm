@@ -12,25 +12,47 @@
 
 define h
     pop
-    setvar S
-    setvar C
+    setvar S # String pointer
+    setvar B # String pointer again
 
     set 5381
     setvar H
 
     while
-        getvar C
-        add 1
+        # Current character in string
+        getvar B
+        memget
         setvar C
 
-        setreg 0
         getvar H
-        
+        mul 33
+        add $C
+        setvar H
+
+        # Increment string pointer
+        getvar B
+        add 1
+        setvar B
+
+        getvar C
     end
+
+    # Return result hash
+    getvar H
+    push
 
     getvar S
     push
 end
 
-"This is a string"
+'aba
 call h
+
+pop
+println d
+
+'aaa
+call h
+
+pop
+println d

@@ -290,14 +290,12 @@ int main(int argc, char ** argv)
             // printf("{%d}\n", last_tokenind);
 
             if (scope <= 0 || (
-                last_tokenind < 0 && (last_token == ':' || last_token == 'g')
+                last_tokenind < 0 && (last_token == ':' || last_token == 'F')
             ))
                 error("program is already at minimum scope", buffer, i);
 
             if (skipping > 0)
-            {
-                skipping--;
-            }
+                --skipping;
 
             --scope;
 
@@ -317,9 +315,9 @@ int main(int argc, char ** argv)
             }
             else if (last_token == ':')
             {
-                // i = last_tokenind - 1;
-
-                if (ptr)
+                // Make sure while loops don't work when defining functions
+                // (I learnt that this was necessary the hard way...)
+                if (ptr && !is_defining)
                 {
                     // ++scope;
                     i = last_tokenind - 1;
@@ -663,6 +661,9 @@ int main(int argc, char ** argv)
             else if (ch == 'O')
                 file_descriptor = fopen(filename, "w+");
 
+            // Free filename
+            free(filename);
+
             // ptr will be 0 if the file opened properly
             ptr = 0;
 
@@ -753,8 +754,11 @@ int main(int argc, char ** argv)
                 }
             }
             else
+            {
                 // Retrieve memory using ptr as the pointer
                 ptr = vmemGet(vmem, ptr);
+                --i;
+            }
         }
         // Add ptr to memory (on top)
         else if (ch == 'M')

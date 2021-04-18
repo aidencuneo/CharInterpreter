@@ -154,48 +154,37 @@ Fx
         # Add the expression after 'add ' (including the space)
         # 'add num'
         $S 4 > FX
+
+        # '++'
+        0ffd MM
     ;
 
     # 'sub'
     $S > rN > Fs ?
-        # '-'
-        0fff M
-        # Add the number after 'sub ' (including the space)
-        # (convert to integer, then save as a Char num)
+        # Add the expression after 'sub ' (including the space)
         # 'sub num'
-        $S 4 > FI > Fi
-        # '+'
-        0ffd M
+        $S 4 > FX
+
+        # '--'
+        0fff MM
     ;
 
     # 'mul'
     $S > rO > Fs ?
-        # '*'
-        0ffc M
-        # '0'
-        0fff3 M
-        # Add the number after 'mul ' (including the space)
-        # (convert to integer, then save as a Char num)
+        # Add the expression after 'mul ' (including the space)
         # 'mul num'
-        $S 4 > FI > Fi
-        # '+'
-        0ffd M
+        $S 4 > FX
+
+        # '**'
+        0ffc MM
     ;
 
     # 'div'
     $S > rP > Fs ?
-        # '>'
-        0ffff2 M
-        # Add the number after 'div ' (including the space)
-        # (convert to integer, then save as a Char num)
+        # Add the expression after 'div ' (including the space)
         # 'div num'
-        $S 4 > FI > Fi
-        # 'R'
-        0fffff7 M
-        # '0'
-        0fff3 M
-        # '<'
-        0ffff M
+        $S 4 > FX
+
         # '//'
         0fff2 MM
     ;
@@ -321,6 +310,26 @@ Fx
         ;
     ;
 
+    # 'and'
+    $S > rY > Fs ?
+        # Add the expression after 'and ' (including the space)
+        # 'and num'
+        $S 4 > FX
+
+        # '&'
+        0ff8 M
+    ;
+
+    # 'or'
+    $S > rZ > Fs ?
+        # Add the expression after 'or ' (including the space)
+        # 'or num'
+        $S 3 > FX
+
+        # '|'
+        0ffffffff4 M
+    ;
+
     # Increment pointer until it reaches the next string in the list
     $S m :
         $S 1 =S $S m
@@ -331,15 +340,50 @@ Fx
 ;
 
 # fun compile_expression 1
+FX
     # Get pointer to expression and save it
     <=A
+
+    # Always begin an expression with '>' to preserve the pointer
+    # '>'
+    0ffff2 M
 
     # If first letter is a digit, convert to int and push value as a Char num
     # A > 47 && A < 58
     0fff2 R0 $A m } >
     0fffd R0 $A m { R0 < & ?
-        
+        # Convert to int and push value as a Char num
+        $A > FI > Fi
     ;
+
+    # If first letter is 'r', get the value from the given register name
+    # A == 'r'
+    0fffffff9 R0 $A m -- !?
+        # Get the value from the given register name
+        # 'r'
+        0fffffff9 M
+        $A 1 m M
+    ;
+
+    # If first letter is '$', get the value from the given variable name
+    # A == '$'
+    0ff6 R0 $A m -- !?
+        # Get the value from the given variable name
+        # '$'
+        0ff6 M
+        $A 1 m M
+    ;
+
+    # Always push the compiled result of an expression into r0
+
+    # 'R'
+    0fffff7 M
+    # '0'
+    0fff3 M
+
+    # Always end an expression with '<' to retrieve the pointer
+    # '<'
+    0ffff M
 ;
 
 # fun strcmp 2
@@ -553,6 +597,8 @@ FI
 'define '  RV
 'call '    RW
 'ptr '     RX
+'and '     RY
+'or '      RZ
 
 # Pointer to tokenised code
 ms >
@@ -618,8 +664,3 @@ ra m.
 
 # Newline
 0a.
-
-# [ :
-#     .
-#     [
-# ;
