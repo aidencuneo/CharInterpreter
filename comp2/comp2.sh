@@ -121,6 +121,14 @@ Fx
         0ffff M
     ;
 
+    # 'memset'
+    $S > rJ > F= ?
+        # 'm'
+        0fffffff4 M
+        # 'S'
+        0fffff8 M
+    ;
+
     # 'set'
     $S > rK > Fs ?
         # '0'
@@ -143,9 +151,9 @@ Fx
 
     # 'add'
     $S > rM > Fs ?
-        # Add the number after 'add ' (including the space)
+        # Add the expression after 'add ' (including the space)
         # 'add num'
-        $S 4 m M
+        $S 4 > FX
     ;
 
     # 'sub'
@@ -153,8 +161,9 @@ Fx
         # '-'
         0fff M
         # Add the number after 'sub ' (including the space)
+        # (convert to integer, then save as a Char num)
         # 'sub num'
-        $S 4 m M
+        $S 4 > FI > Fi
         # '+'
         0ffd M
     ;
@@ -166,8 +175,9 @@ Fx
         # '0'
         0fff3 M
         # Add the number after 'mul ' (including the space)
+        # (convert to integer, then save as a Char num)
         # 'mul num'
-        $S 4 m M
+        $S 4 > FI > Fi
         # '+'
         0ffd M
     ;
@@ -177,8 +187,9 @@ Fx
         # '>'
         0ffff2 M
         # Add the number after 'div ' (including the space)
+        # (convert to integer, then save as a Char num)
         # 'div num'
-        $S 4 m M
+        $S 4 > FI > Fi
         # 'R'
         0fffff7 M
         # '0'
@@ -251,6 +262,65 @@ Fx
         0ffff M
     ;
 
+    # 'ptr'
+    $S > rX > Fs ?
+        # Define a pointer to an array of ints with a length equal to this
+        # instruction's argument
+
+        # 'm'
+        0fffffff4 M
+        # 's'
+        0fffffffa M
+        # '>'
+        0ffff2 M
+
+        # Add the number after 'ptr ' (including the space)
+        # Also add one to that number, because the pointer should have the
+        # length specified, plus a null byte at the end
+        $S 4 > FI 1 > Fi
+
+        # ':'
+        0fffd M
+
+        # '>'
+        0ffff2 M
+        # 'M'
+        0fffff2 M
+        # '<'
+        0ffff M
+
+        # '-'
+        0fff M
+        # '1'
+        0fff4 M
+        # '+'
+        0ffd M
+        # ';'
+        0fffe M
+
+        # '<'
+        0ffff M
+    ;
+
+    # "'" || '"'
+    $S m R0 0ff9 -- ! >
+    $S m R0 0ff4 -- ! R0 < | ?
+        # Save starting quote to put at the end
+        $S m >
+
+        $S m :
+            $S m M
+            $S 1 =S $S m
+        ;
+
+        # Fetch starting quote to put at the end of this string, as long as the
+        # string hasn't already been ended
+        # (Ending quotes are optional)
+        $S -1+ m R0 ( -- ?
+            < M
+        ;
+    ;
+
     # Increment pointer until it reaches the next string in the list
     $S m :
         $S 1 =S $S m
@@ -258,6 +328,18 @@ Fx
 
     # Push new string pointer (+1) back into the stack
     $S 1 >
+;
+
+# fun compile_expression 1
+    # Get pointer to expression and save it
+    <=A
+
+    # If first letter is a digit, convert to int and push value as a Char num
+    # A > 47 && A < 58
+    0fff2 R0 $A m } >
+    0fffd R0 $A m { R0 < & ?
+        
+    ;
 ;
 
 # fun strcmp 2
@@ -382,9 +464,9 @@ Fi
     # For any remaining numbers, simply add '0' (48) and append to compiled data
 
     # If num < 10
-    $A R0 # (make sure num isn't 0)
-    0a R0 $A {
-    & ?
+    # (make sure num isn't 0)
+    0a R0 $A { R0
+    $A & ?
         # Add '0' (48) to number and add to compiled data
         $A fff3 M
     ;
@@ -456,7 +538,7 @@ FI
 'memget'   RG
 'print '   RH
 'println ' RI
-0          RJ
+'memset'   RJ
 'set '     RK
 'ch '      RL
 'add '     RM
@@ -470,6 +552,7 @@ FI
 'getreg '  RU
 'define '  RV
 'call '    RW
+'ptr '     RX
 
 # Pointer to tokenised code
 ms >

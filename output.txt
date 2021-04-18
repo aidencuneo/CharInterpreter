@@ -1,2 +1,2 @@
 # Program compiled with CharInterpreter/comp2/comp2.sh
-Fa0fffffffffffffffffffffffffffffffffffffcp>aP<0ffffffff4p>aP<;0f5:>Fa<-1+;00P>aP<
+Fh<=S=C0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb=H:$C=CR0$H;$S);"This is a string">Fh<

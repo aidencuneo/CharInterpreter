@@ -1,17 +1,16 @@
-define a
-    set 567
-    println d
+# &0
+set 53
+memadd
 
-    set 124
-    println d
-end
+# ra
+set 100
+setreg a
 
-set 20
+# $x
+set 23
+setvar x
 
-while
-    call a
-    sub 1
-end
-
-set 0
-println c
+# Add them together (+9)
+set 9
+add ra
+add $x

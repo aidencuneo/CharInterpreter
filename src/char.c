@@ -255,8 +255,8 @@ int main(int argc, char ** argv)
             printf("] mem=[");
             for (int a = 0; a < vmem->size; a++)
             {
-                if (!vmem->items[a])
-                    printf("\\0");
+                if (vmem->items[a] < 32)
+                    printf("\\(%d)", vmem->items[a]);
                 else
                     printf("%c", vmem->items[a]);
             }
@@ -717,6 +717,8 @@ int main(int argc, char ** argv)
             // Set ptr to the current memory size
             if (n == 's')
                 ptr = vmem->size;
+            else if (n == 'S')
+                vmem->items[varlistGet(registers, '0')] = ptr;
             // Print string from memory using ptr as the pointer
             else if (n == 'P')
             {
