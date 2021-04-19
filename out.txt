@@ -1,0 +1,2 @@
+# Program compiled with CharInterpreter/chasm/chasm.chasm
+0ffffffff3=aiden~0fffffffffffffff9=blishen~0fffffffffffffffffffffff=cuneo~'Hello, world!'>01R0~<++mP>aP<$aiden~p>aP<$blishen~p>aP<$cuneo~p>aP<

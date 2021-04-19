@@ -1,0 +1,14 @@
+$aiden = 123
+$blishen = 234
+$cuneo = 345
+
+'Hello, world!'
+add 1
+println s
+
+getvar aiden
+println d
+getvar blishen
+println d
+getvar cuneo
+println d
