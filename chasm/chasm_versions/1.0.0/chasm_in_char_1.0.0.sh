@@ -199,40 +199,75 @@ Fcompile_line~
     $S~ > rR~ > Fstartswith~ ?
         # '='
         0ffff1 M
-        # Add the letter after 'setvar ' (including the space)
-        $S~ 7 m M
+
+        # Push entire variable name
+        $S~ 7 =S~ m :
+            M
+            $S~ 1 =S~ m
+        ;
+
+        # '~'
+        0ffffffff6 M
     ;
 
     # 'setreg'
     $S~ > rS~ > Fstartswith~ ?
         # 'R'
         0fffff7 M
-        # Add the letter after 'setreg ' (including the space)
-        $S~ 7 m M
+
+        # Push entire register name
+        $S~ 7 =S~ m :
+            M
+            $S~ 1 =S~ m
+        ;
+
+        # '~'
+        0ffffffff6 M
     ;
 
     # 'getvar'
     $S~ > rT~ > Fstartswith~ ?
         # '$'
         0ff6 M
-        # Add the letter after 'getvar ' (including the space)
-        $S~ 7 m M
+
+        # Push entire variable name
+        $S~ 7 =S~ m :
+            M
+            $S~ 1 =S~ m
+        ;
+
+        # '~'
+        0ffffffff6 M
     ;
 
     # 'getreg'
     $S~ > rU~ > Fstartswith~ ?
         # 'r'
         0fffffff9 M
-        # Add the letter after 'getreg ' (including the space)
-        $S~ 7 m M
+
+        # Push entire register name
+        $S~ 7 =S~ m :
+            M
+            $S~ 1 =S~ m
+        ;
+
+        # '~'
+        0ffffffff6 M
     ;
 
     # 'define'
     $S~ > rV~ > Fstartswith~ ?
         # 'F'
         0ffffa M
-        # Add the letter after 'define ' (including the space)
-        $S~ 7 m M
+
+        # Push entire function name
+        $S~ 7 =S~ m :
+            M
+            $S~ 1 =S~ m
+        ;
+
+        # '~'
+        0ffffffff6 M
     ;
 
     # 'call'
@@ -245,8 +280,16 @@ Fcompile_line~
         0ffff2 M
         # 'F'
         0ffffa M
-        # Add the letter after 'call ' (including the space)
-        $S~ 5 m M
+
+        # Push entire function name
+        $S~ 5 =S~ m :
+            M
+            $S~ 1 =S~ m
+        ;
+
+        # '~'
+        0ffffffff6 M
+
         # '<'
         0ffff M
     ;
@@ -377,7 +420,15 @@ Fcompile_expression~
         # Get the value from the given register name
         # 'r'
         0fffffff9 M
-        $A~ 1 m M
+
+        # Push entire register name
+        $A~ 1 =A~ m :
+            M
+            $A~ 1 =A~ m
+        ;
+
+        # '~'
+        0ffffffff6 M
     ;
 
     # If first letter is '$', get the value from the given variable name
@@ -386,7 +437,15 @@ Fcompile_expression~
         # Get the value from the given variable name
         # '$'
         0ff6 M
-        $A~ 1 m M
+
+        # Push entire variable name
+        $A~ 1 =A~ m :
+            M
+            $A~ 1 =A~ m
+        ;
+
+        # '~'
+        0ffffffff6 M
     ;
 
     # Always push the compiled result of an expression into r0
@@ -395,6 +454,8 @@ Fcompile_expression~
     0fffff7 M
     # '0'
     0fff3 M
+    # '~'
+    0ffffffff6 M
 
     # Always end an expression with '<' to retrieve the pointer
     # '<'

@@ -1,7 +1,7 @@
 # See code_styling.txt for code styling information
 
 # fun compile_line 1
-define x
+define compile_line
     # Pop the pointer
     pop
 
@@ -10,107 +10,107 @@ define x
     setvar S
 
     # Trim spaces from the start of the string
-    inline $S m R0 0ff2 -- !:
-    inline     $S 1 =S
-    inline     $S m R0 0ff2 -- !
-    end
+    inline $S~ m R0~ 0ff2 -- !:
+    inline     $S~ 1 =S~
+    inline     $S~ m R0~ 0ff2 -- !
+    inline ;
 
     # If this string starts with '#', skip the whole thing
-    inline $S m R0 0ff5 -- !?
+    inline $S~ m R0~ 0ff5 -- !?
         # Increment pointer until it reaches the end of this string
-    inline     $S m :
-    inline         $S 1 =S $S m
-        end
-    end
+    inline     $S~ m :
+    inline         $S~ 1 =S~ $S~ m
+    inline     ;
+    inline ;
 
     # Compare this string with each of the saved strings
 
     # 'push'
-    inline $S > rA > F= ?
+    inline $S~ > rA~ > Fstrcmp~ ?
         # ')'
     inline     0ffb M
-    end
+    inline ;
 
     # 'pop'
-    inline $S > rB > F= ?
+    inline $S~ > rB~ > Fstrcmp~ ?
         # '<'
     inline     0ffff M
-    end
+    inline ;
 
     # 'if'
-    inline $S > rC > F= ?
+    inline $S~ > rC~ > Fstrcmp~ ?
         # '?'
     inline     0ffff3 M
-    end
+    inline ;
 
     # 'while'
-    inline $S > rD > F= ?
+    inline $S~ > rD~ > Fstrcmp~ ?
         # ':'
     inline     0fffd M
-    end
+    inline ;
 
     # 'end'
-    inline $S > rE > F= ?
+    inline $S~ > rE~ > Fstrcmp~ ?
         # ';'
     inline     0fffe M
-    end
+    inline ;
 
     # 'memadd'
-    inline $S > rF > F= ?
+    inline $S~ > rF~ > Fstrcmp~ ?
         # 'M'
     inline     0fffff2 M
-    end
+    inline ;
 
     # 'memget'
-    inline $S > rG > F= ?
+    inline $S~ > rG~ > Fstrcmp~ ?
         # 'm'
     inline     0fffffff4 M
-    end
+    inline ;
 
     # 'print '
-    inline $S > rH > Fs ?
+    inline $S~ > rH~ > Fstartswith~ ?
         # 'print d'
-    inline     $S 6 m R0 0ffffffa -- !?
+    inline     $S~ 6 m R0~ 0ffffffa -- !?
             # 'p'
     inline         0fffffff7 M
-        end
+    inline     ;
 
         # 'print c'
-    inline     $S 6 m R0 0ffffff9 -- !?
+    inline     $S~ 6 m R0~ 0ffffff9 -- !?
             # 'P'
     inline         0fffff5 M
-        end
+    inline     ;
 
         # 'print s'
-    inline     $S 6 m R0 0fffffffa -- !?
+    inline     $S~ 6 m R0~ 0fffffffa -- !?
             # 'm'
     inline         0fffffff4 M
             # 'P'
     inline         0fffff5 M
-        end
-    end
+    inline     ;
+    inline ;
 
     # 'println '
-    inline $S > rI > Fs ?
+    inline $S~ > rI~ > Fstartswith~ ?
         # 'println d'
-    inline     $S 8 m R0 0ffffffa -- !?
+    inline     $S~ 8 m R0~ 0ffffffa -- !?
             # 'p'
     inline         0fffffff7 M
-        end
+    inline     ;
 
         # 'println c'
-    inline     $S 8 m R0 0ffffff9 -- !?
+    inline     $S~ 8 m R0~ 0ffffff9 -- !?
             # 'P'
     inline         0fffff5 M
-        end
+    inline     ;
 
         # 'println s'
-    inline     $S 8 m R0 0fffffffa -- !?
+    inline     $S~ 8 m R0~ 0fffffffa -- !?
             # 'm'
     inline         0fffffff4 M
             # 'P'
     inline         0fffff5 M
-        end
+    inline     ;
 
         # println is exactly the same as print, but `>aP<` is pushed to the
         # end to suffix a newline
@@ -123,124 +123,167 @@ define x
     inline     0fffff5 M
         # '<'
     inline     0ffff M
-    end
+    inline ;
 
     # 'memset'
-    inline $S > rJ > F= ?
+    inline $S~ > rJ~ > Fstrcmp~ ?
         # 'm'
     inline     0fffffff4 M
         # 'S'
     inline     0fffff8 M
-    end
+    inline ;
 
     # 'set'
-    inline $S > rK > Fs ?
+    inline $S~ > rK~ > Fstartswith~ ?
         # '0'
     inline     0fff3 M
         # Add the number after 'set ' (including the space)
         # (convert to integer, then save as a Char num)
         # 'set num'
-    inline     $S 4 > FI > Fi
-    end
+    inline     $S~ 4 > Fto_int~ > Fto_char_num~
+    inline ;
 
     # 'ch'
-    inline $S > rL > Fs ?
+    inline $S~ > rL~ > Fstartswith~ ?
         # '0'
     inline     0fff3 M
         # Add the number after 'ch ' (including the space)
         # (as a Char num)
         # 'ch num'
-    inline     $S 3 m > Fi
-    end
+    inline     $S~ 3 m > Fto_char_num~
+    inline ;
 
     # 'add'
-    inline $S > rM > Fs ?
+    inline $S~ > rM~ > Fstartswith~ ?
         # Add the expression after 'add ' (including the space)
         # 'add num'
-    inline     $S 4 > FX
+    inline     $S~ 4 > Fcompile_expression~
 
         # '++'
     inline     0ffd MM
-    end
+    inline ;
 
     # 'sub'
-    inline $S > rN > Fs ?
+    inline $S~ > rN~ > Fstartswith~ ?
         # Add the expression after 'sub ' (including the space)
         # 'sub num'
-    inline     $S 4 > FX
+    inline     $S~ 4 > Fcompile_expression~
 
         # '--'
     inline     0fff MM
-    end
+    inline ;
 
     # 'mul'
-    inline $S > rO > Fs ?
+    inline $S~ > rO~ > Fstartswith~ ?
         # Add the expression after 'mul ' (including the space)
         # 'mul num'
-    inline     $S 4 > FX
+    inline     $S~ 4 > Fcompile_expression~
 
         # '**'
     inline     0ffc MM
-    end
+    inline ;
 
     # 'div'
-    inline $S > rP > Fs ?
+    inline $S~ > rP~ > Fstartswith~ ?
         # Add the expression after 'div ' (including the space)
         # 'div num'
-    inline     $S 4 > FX
+    inline     $S~ 4 > Fcompile_expression~
 
         # '//'
     inline     0fff2 MM
-    end
+    inline ;
 
     # 'exit'
-    inline $S > rQ > F= ?
+    inline $S~ > rQ~ > Fstrcmp~ ?
         # 'q'
     inline     0fffffff4 M
-    end
+    inline ;
 
     # 'setvar'
-    inline $S > rR > Fs ?
+    inline $S~ > rR~ > Fstartswith~ ?
         # '='
     inline     0ffff1 M
-        # Add the letter after 'setvar ' (including the space)
-    inline     $S 7 m M
-    end
+
+        # Push entire variable name
+    inline     $S~ 7 =S~ m :
+    inline         M
+    inline         $S~ 1 =S~ m
+    inline     ;
+
+        # '~'
+    inline     0ffffffff6 M
+    inline ;
 
     # 'setreg'
-    inline $S > rS > Fs ?
+    inline $S~ > rS~ > Fstartswith~ ?
         # 'R'
     inline     0fffff7 M
-        # Add the letter after 'setreg ' (including the space)
-    inline     $S 7 m M
-    end
+
+        # Push entire register name
+    inline     $S~ 7 =S~ m :
+    inline         M
+    inline         $S~ 1 =S~ m
+    inline     ;
+
+        # '~'
+    inline     0ffffffff6 M
+    inline ;
 
     # 'getvar'
-    inline $S > rT > Fs ?
+    inline $S~ > rT~ > Fstartswith~ ?
         # '$'
     inline     0ff6 M
-        # Add the letter after 'getvar ' (including the space)
-    inline     $S 7 m M
-    end
+
+        # Push entire variable name
+        getvar S
+        add 7
+        setvar S
+        memget
+        while
+            memadd
+
+            getvar S
+            add 1
+            setvar S
+            memget
+        end
+
+        # '~'
+    inline     0ffffffff6 M
+    inline ;
 
     # 'getreg'
-    inline $S > rU > Fs ?
+    inline $S~ > rU~ > Fstartswith~ ?
         # 'r'
     inline     0fffffff9 M
-        # Add the letter after 'getreg ' (including the space)
-    inline     $S 7 m M
-    end
+
+        # Push entire register name
+    inline     $S~ 7 =S~ m :
+    inline         M
+    inline         $S~ 1 =S~ m
+    inline     ;
+
+        # '~'
+    inline     0ffffffff6 M
+    inline ;
 
     # 'define'
-    inline $S > rV > Fs ?
+    inline $S~ > rV~ > Fstartswith~ ?
         # 'F'
     inline     0ffffa M
-        # Add the letter after 'define ' (including the space)
-    inline     $S 7 m M
-    end
+
+        # Push entire function name
+    inline     $S~ 7 =S~ m :
+    inline         M
+    inline         $S~ 1 =S~ m
+    inline     ;
+
+        # '~'
+    inline     0ffffffff6 M
+    inline ;
 
     # 'call'
-    inline $S > rW > Fs ?
+    inline $S~ > rW~ > Fstartswith~ ?
         # Function calling differs from function defining in that the pointer
         # is saved to the stack and retrieved from the stack before and after
         # function calling, respectively.
@@ -249,14 +292,22 @@ define x
     inline     0ffff2 M
         # 'F'
     inline     0ffffa M
-        # Add the letter after 'call ' (including the space)
-    inline     $S 5 m M
+
+        # Push entire function name
+    inline     $S~ 5 =S~ m :
+    inline         M
+    inline         $S~ 1 =S~ m
+    inline     ;
+
+        # '~'
+    inline     0ffffffff6 M
+
         # '<'
     inline     0ffff M
-    end
+    inline ;
 
     # 'ptr'
-    inline $S > rX > Fs ?
+    inline $S~ > rX~ > Fstartswith~ ?
         # Define a pointer to an array of ints with a length equal to this
         # instruction's argument
 
@@ -270,7 +321,7 @@ define x
         # Add the number after 'ptr ' (including the space)
         # Also add one to that number, because the pointer should have the
         # length specified, plus a null byte at the end
-    inline     $S 4 > FI 1 > Fi
+    inline     $S~ 4 > Fto_int~ 1 > Fto_char_num~
 
         # ':'
     inline     0fffd M
@@ -293,66 +344,66 @@ define x
 
         # '<'
     inline     0ffff M
-    end
+    inline ;
 
     # "'" || '"'
-    inline $S m R0 0ff9 -- ! >
-    inline $S m R0 0ff4 -- ! R0 < | ?
+    inline $S~ m R0~ 0ff9 -- ! >
+    inline $S~ m R0~ 0ff4 -- ! R0~ < | ?
         # Save starting quote to put at the end
-    inline     $S m >
+    inline     $S~ m >
 
-    inline     $S m :
-    inline         $S m M
-    inline         $S 1 =S $S m
-        end
+    inline     $S~ m :
+    inline         $S~ m M
+    inline         $S~ 1 =S~ $S~ m
+    inline     ;
 
         # Fetch starting quote to put at the end of this string, as long as the
         # string hasn't already been ended
         # (Ending quotes are optional)
-    inline     $S -1+ m R0 ( -- ?
+    inline     $S~ -1+ m R0~ ( -- ?
     inline         < M
-        end
-    end
+    inline     ;
+    inline ;
 
     # 'and'
-    inline $S > rY > Fs ?
+    inline $S~ > rY~ > Fstartswith~ ?
         # Add the expression after 'and ' (including the space)
         # 'and num'
-    inline     $S 4 > FX
+    inline     $S~ 4 > Fcompile_expression~
 
         # '&'
     inline     0ff8 M
-    end
+    inline ;
 
     # 'or'
-    inline $S > rZ > Fs ?
+    inline $S~ > rZ~ > Fstartswith~ ?
         # Add the expression after 'or ' (including the space)
         # 'or num'
-    inline     $S 3 > FX
+    inline     $S~ 3 > Fcompile_expression~
 
         # '|'
     inline     0ffffffff4 M
-    end
+    inline ;
 
     # 'inline'
-    inline $S > rz > Fs ?
+    inline $S~ > rAA~ > Fstartswith~ ?
         # Add everything after 'inline ' (including the space)
-    inline     $S 7 =S
+    inline     $S~ 7 =S~
 
-    inline     $S m :
+    inline     $S~ m :
             # Add character
-    inline         $S m M
+    inline         $S~ m M
 
             # Increment pointer
-    inline         $S 1 =S
-    inline         $S m
-        end
-    end
+    inline         $S~ 1 =S~
+    inline         $S~ m
+    inline     ;
+    inline ;
 
     # Increment pointer until it reaches the next string in the list
-    inline $S m :
-    inline     $S 1 =S $S m
-    end
+    inline $S~ m :
+    inline     $S~ 1 =S~ $S~ m
+    inline ;
 
     # Push new string pointer (+1) back into the stack
     getvar S
@@ -366,9 +417,9 @@ end
 
 
 # fun compile_expression 1
-define X
+define compile_expression
     # Get pointer to expression and save it
-    inline <=A
+    inline <=A~
 
     # Always begin an expression with '>' to preserve the pointer
     # '>'
@@ -376,29 +427,45 @@ define X
 
     # If first letter is a digit, convert to int and push value as a Char num
     # A > 47 && A < 58
-    inline 0fff2 R0 $A m } >
-    inline 0fffd R0 $A m { R0 < & ?
+    inline 0fff2 R0~ $A~ m } >
+    inline 0fffd R0~ $A~ m { R0~ < & ?
         # Convert to int and push value as a Char num
-        inline $A > FI > Fi
-    end
+    inline     $A~ > Fto_int~ > Fto_char_num~
+    inline ;
 
     # If first letter is 'r', get the value from the given register name
     # A == 'r'
-    inline 0fffffff9 R0 $A m -- !?
+    inline 0fffffff9 R0~ $A~ m -- !?
         # Get the value from the given register name
         # 'r'
-        inline 0fffffff9 M
-        inline $A 1 m M
-    end
+    inline     0fffffff9 M
+
+        # Push entire register name
+    inline     $A~ 1 =A~ m :
+    inline         M
+    inline         $A~ 1 =A~ m
+    inline     ;
+
+        # '~'
+    inline     0ffffffff6 M
+    inline ;
 
     # If first letter is '$', get the value from the given variable name
     # A == '$'
-    inline 0ff6 R0 $A m -- !?
+    inline 0ff6 R0~ $A~ m -- !?
         # Get the value from the given variable name
         # '$'
-        inline 0ff6 M
-        inline $A 1 m M
-    end
+    inline     0ff6 M
+
+        # Push entire variable name
+    inline     $A~ 1 =A~ m :
+    inline         M
+    inline         $A~ 1 =A~ m
+    inline     ;
+
+        # '~'
+    inline     0ffffffff6 M
+    inline ;
 
     # Always push the compiled result of an expression into r0
 
@@ -406,6 +473,8 @@ define X
     inline 0fffff7 M
     # '0'
     inline 0fff3 M
+    # '~'
+    inline 0ffffffff6 M
 
     # Always end an expression with '<' to retrieve the pointer
     # '<'
@@ -414,87 +483,93 @@ end
 
 
 # fun startswith 2
-define s
+define startswith
     # r1 is prefix
     # r2 is string to check prefix against
 
     # Save both string pointers to r1 and r2
-    inline < R1
-    inline < R2
+    pop
+    setreg 1
+    pop
+    setreg 2
 
     # Equal? (Starts true)
-    inline 01=E
+    set 1
+    setvar E
 
     # Compare string equality
-    inline r1 m :
+    getreg 1
+    memget
+    while
         # If !equal
-        inline r1 m R0
-        inline r2 m -- ?
+        inline r1~ m R0~
+        inline r2~ m -- ?
             # Set unequal
-            inline 0=E
+            inline 0=E~
         end
 
         # Increment pointers
-        inline r1 1 R1
-        inline r2 1 R2
+        inline r1~ 1 R1~
+        inline r2~ 1 R2~
 
-        inline r1 m
+        getreg 1
+        memget
     end
 
     # Stop at the end of the shortest string because this function is only
     # checking whether a string starts with another
 
-    inline $E
+    inline $E~
 end
 
 
 # fun push_int_as_charnum 1
-define i
+define to_char_num
     # Push an integer into compiled data as a Char num
     # Example: 32 -> ff2
 
-    inline <=A
+    inline < =A~
 
     # While num > 14
-    inline 0e R0 $A } :
+    inline 0e R0~ $A~ } :
         # Add 'f' to compiled data
         inline 0ffffffc M
 
         # num -= 15
-        inline $A -f+ =A
+        inline $A~ -f+ =A~
     
         # While num > 14
-        inline 0e R0 $A }
+        inline 0e R0~ $A~ }
     end
 
     # Now check the remaining value and add the final character
 
     # 14 -> 'e'
-    inline $A -e+ !?
+    inline $A~ -e+ !?
         # Add 'e' to compiled data
         inline 0ffffffb M
     end
 
     # 13 -> 'd'
-    inline $A -d+ !?
+    inline $A~ -d+ !?
         # Add 'd' to compiled data
         inline 0ffffffa M
     end
 
     # 12 -> 'c'
-    inline $A -c+ !?
+    inline $A~ -c+ !?
         # Add 'c' to compiled data
         inline 0ffffff9 M
     end
 
     # 11 -> 'b'
-    inline $A -b+ !?
+    inline $A~ -b+ !?
         # Add 'b' to compiled data
         inline 0ffffff8 M
     end
 
     # 10 -> 'a'
-    inline $A -a+ !?
+    inline $A~ -a+ !?
         # Add 'a' to compiled data
         inline 0ffffff7 M
     end
@@ -503,60 +578,60 @@ define i
 
     # If num < 10
     # (make sure num isn't 0)
-    inline 0a R0 $A { R0
-    inline $A & ?
+    inline 0a R0~ $A~ { R0~
+    inline $A~ & ?
         # Add '0' (48) to number and add to compiled data
-        inline $A fff3 M
+        inline $A~ fff3 M
     end
 end
 
 
-# fun toint 1
-define I
+# fun to_int 1
+define to_int
     # Convert a string pointer to an integer
 
     # Multiplier
-    inline 01=M
+    inline 01=M~
 
     # Pointer
-    inline <=A
+    inline <=A~
 
     # Result num
-    inline 0=B
+    inline 0=B~
 
     # Start pointer
-    inline $A=C
+    inline $A~ =C~
 
     # Increment A until a null byte is reached
-    inline $A m :
-        inline $A 1 =A
-        inline $A m
+    inline $A~ m :
+        inline $A~ 1 =A~
+        inline $A~ m
     end
 
     # Decrement A once
-    inline $A -1+ =A
+    inline $A~ -1+ =A~
 
     # While A > C - 1 (A >= C)
-    inline $C -1+ R0 $A } :
+    inline $C~ -1+ R0~ $A~ } :
         # B += (*A - '0') * M
-        inline $A m -fff3+ R0 $M ** R0 $B ++ =B
+        inline $A~ m -fff3+ R0~ $M~ ** R0~ $B~ ++ =B~
 
         # M *= 10
-        inline $M R0 0a ** =M
+        inline $M~ R0~ 0a ** =M~
 
         # Decrement A
-        inline $A -1+ =A
+        inline $A~ -1+ =A~
 
         # Loop condition
-        inline $C -1+ R0 $A }
+        inline $C~ -1+ R0~ $A~ }
     end
 
-    inline $B
+    inline $B~
 end
 
 
 # fun strcmp 2
-define =
+define strcmp
     # Pop pointer and remove it
     # pop
 
@@ -635,7 +710,7 @@ inline @
 
 # Keep argc in $v
 pop
-setvar v
+setvar argc
 
 # Clear first two arguments
 pop
@@ -704,7 +779,7 @@ setreg Y
 'or '
 setreg Z
 'inline '
-setreg z
+setreg AA
 
 # Pointer to tokenised code
 inline ms
@@ -749,21 +824,19 @@ while
     inline ,
 end
 
-exit
-
 # Push null byte to signify the end of the final string
 set 0
 memadd
 
 # Pointer to compiled data
 inline ms
-setreg !
+setvar compiled_data
 
 # Compilation
 getvar i
 while
     # Compile current string
-    call x
+    call compile_line
 
     # Decrement counter
     getvar i
@@ -794,7 +867,7 @@ inline m.
 inline 0a.
 
 # Write compiled data to file
-getreg !
+getvar compiled_data
 inline m.
 
 # Newline

@@ -10,13 +10,16 @@
 #     return hash;
 # }
 
-define h
+define hash
     pop
-    setvar S # String pointer
-    setvar B # String pointer again
+
+    # String pointer
+    setvar str
+    # String pointer again
+    setvar B
 
     set 5381
-    setvar H
+    setvar result
 
     while
         # Current character in string
@@ -24,10 +27,10 @@ define h
         memget
         setvar C
 
-        getvar H
+        getvar result
         mul 33
         add $C
-        setvar H
+        setvar result
 
         # Increment string pointer
         getvar B
@@ -40,9 +43,9 @@ define h
     # Make sure result hash can fit into a single character
 
     # If hash is less than 0, make hash positive
-    getvar H
-    call a
-    setvar H
+    getvar result
+    call abs
+    setvar result
 
     # hash %= 1114111
     set 111
@@ -52,49 +55,49 @@ define h
     add 11
     setreg 0
 
-    getvar H
+    getvar result
     inline %
-    setvar H
+    setvar result
 
     # Return result hash
-    getvar H
+    getvar result
     push
 
-    getvar S
+    getvar str
     push
 end
 
 
 # fun abs 1
-define a
+define abs
     # Save pointer
     pop
-    setvar P
+    setvar ptr
 
     # If pointer < 0
-    inline 0 R0 $P {
+    inline 0 R0~ $ptr~ {
     if
         # Make pointer positive
-        getvar P
-        sub $P
-        sub $P
-        setvar P
+        getvar ptr
+        sub $ptr
+        sub $ptr
+        setvar ptr
     end
 
     # Push result
-    getvar P
+    getvar ptr
     push
 end
 
 
 'hash'
-call h
+call hash
 
 pop
 println d
 
 'compile_code'
-call h
+call hash
 
 pop
 println d
