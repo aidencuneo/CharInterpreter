@@ -1,3 +1,5 @@
+/*
+
 int charCount(char * st, char ch)
 {
     int count = 0;
@@ -34,6 +36,8 @@ char * readfile(char * fname)
     if (buffer)
         fread(buffer, 1, length, f);
 
+    printf("[%d]\n", res);
+
     fclose(f);
 
     buffer = realloc(buffer, length + 1);
@@ -41,3 +45,5 @@ char * readfile(char * fname)
 
     return buffer;
 }
+
+*/

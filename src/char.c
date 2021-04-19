@@ -8,7 +8,7 @@
 #include "vmem.c"
 #include "stack.c"
 #include "varlist.c"
-#include "var.c"
+// #include "var.c"
 
 char * current_file;
 char * buffer = 0;
@@ -127,13 +127,28 @@ void quit(int code)
     free(stack->items);
     free(stack);
 
+    // Free register names
+    for (int i = 0; i < registers->size; i++)
+        free(registers->names[i]);
+    free(registers->names);
+    free(registers->values);
+    free(registers);
+
+    // Free varlist names
+    for (int i = 0; i < varlist->size; i++)
+        free(varlist->names[i]);
     free(varlist->names);
     free(varlist->values);
     free(varlist);
 
+    // Free function names
+    for (int i = 0; i < funcs->size; i++)
+        free(funcs->names[i]);
     free(funcs->names);
     free(funcs->values);
     free(funcs);
+
+
 
     free(buffer);
 
@@ -185,8 +200,9 @@ int main(int argc, char ** argv)
     length = ftell(f);
     fseek(f, 0, SEEK_SET);
     buffer = malloc(length);
+    int res = 0;
     if (buffer)
-        fread(buffer, 1, length, f);
+        res = fread(buffer, 1, length, f);
     fclose(f);
 
     if (!buffer)
@@ -232,9 +248,9 @@ int main(int argc, char ** argv)
     tokeninds_len = 0;
 
     // Custom variables
-    registers = newVarlist(32);
-    varlist = newVarlist(16);
-    funcs = newVarlist(8);
+    registers = newVarlist(64);
+    varlist = newVarlist(32);
+    funcs = newVarlist(16);
 
     int is_defining = 0; // Currently defining a function?
     int ret_index = -1; // Index to return to after function call
@@ -411,13 +427,13 @@ int main(int argc, char ** argv)
         else if (ch == '!')
             ptr = !ptr;
         else if (ch == '&')
-            ptr = ptr && varlistGet(registers, '0');
+            ptr = ptr && varlistGet(registers, "0");
         else if (ch == '|')
-            ptr = ptr || varlistGet(registers, '0');
+            ptr = ptr || varlistGet(registers, "0");
         else if (ch == '{')
-            ptr = ptr < varlistGet(registers, '0');
+            ptr = ptr < varlistGet(registers, "0");
         else if (ch == '}')
-            ptr = ptr > varlistGet(registers, '0');
+            ptr = ptr > varlistGet(registers, "0");
         else if (ch == '@')
         {
             // The @ sign will commonly be used as a way to perform complex
@@ -484,7 +500,7 @@ int main(int argc, char ** argv)
                 n = buffer[i];
 
             if (n == '+')
-                ptr += varlistGet(registers, '0');
+                ptr += varlistGet(registers, "0");
             else
             {
                 mult = 1;
@@ -498,7 +514,7 @@ int main(int argc, char ** argv)
                 n = buffer[i];
 
             if (n == '-')
-                ptr -= varlistGet(registers, '0');
+                ptr -= varlistGet(registers, "0");
             else
             {
                 mult = -1;
@@ -512,7 +528,7 @@ int main(int argc, char ** argv)
                 n = buffer[i];
 
             if (n == '*')
-                ptr *= varlistGet(registers, '0');
+                ptr *= varlistGet(registers, "0");
             else
             {
                 mult = ptr;
@@ -526,54 +542,80 @@ int main(int argc, char ** argv)
                 n = buffer[i];
 
             if (n == '/')
-                ptr /= varlistGet(registers, '0');
+                ptr /= varlistGet(registers, "0");
             else
                 --i;
         }
+        else if (ch == '%')
+            ptr %= varlistGet(registers, "0");
         else if (ch == '=')
         {
-            char n = 0;
-            if (++i < length)
-                n = buffer[i];
+            // Get length of name
+            int start = i + 1;
+            int nameLen = 0;
+            while (++i < length && buffer[i] && !isspace(buffer[i]) && buffer[i] != '~')
+                ++nameLen;
 
-            if (isspace(n))
-                n = 0;
+            // Get name
+            char * name = malloc(nameLen + 1);
+            for (int a = 0; a < nameLen; a++)
+                name[a] = buffer[start + a];
 
-            if (!n)
-                error("'=' keyword requires a variable name to store into (example: =n)",
+            // Null byte
+            name[nameLen] = 0;
+
+            if (!name || !name[0])
+                error("'=' keyword requires a variable name to store into (example: =name~)",
                     buffer, i - 1);
 
-            varlistAdd(varlist, n, ptr);
+            varlistAdd(varlist, name, ptr);
         }
         else if (ch == '$')
         {
-            char n = 0;
-            if (++i < length)
-                n = buffer[i];
+            // Get length of name
+            int start = i + 1;
+            int nameLen = 0;
+            while (++i < length && buffer[i] && !isspace(buffer[i]) && buffer[i] != '~')
+                ++nameLen;
 
-            if (isspace(n))
-                n = 0;
+            // Get name
+            char * name = malloc(nameLen + 1);
+            for (int a = 0; a < nameLen; a++)
+                name[a] = buffer[start + a];
 
-            if (!n)
-                error("'$' keyword requires a variable name to retrieve from (example: $n)",
+            // Null byte
+            name[nameLen] = 0;
+
+            if (!name || !name[0])
+                error("'$' keyword requires a variable name to retrieve from (example: $name~)",
                     buffer, i - 1);
 
-            if (n == '@')
+            if (!strcmp(name, "@"))
                 ptr = stack->top + 1;
             else
-                ptr = varlistGet(varlist, n);
+                ptr = varlistGet(varlist, name);
+
+            // Name is no longer required
+            free(name);
         }
         else if (ch == 'F')
         {
-            char n = 0;
-            if (++i < length)
-                n = buffer[i];
+            // Get length of name
+            int start = i + 1;
+            int nameLen = 0;
+            while (++i < length && buffer[i] && !isspace(buffer[i]) && buffer[i] != '~')
+                ++nameLen;
 
-            if (isspace(n))
-                n = 0;
+            // Get name
+            char * name = malloc(nameLen + 1);
+            for (int a = 0; a < nameLen; a++)
+                name[a] = buffer[start + a];
 
-            if (!n)
-                error("'F' keyword requires a function name to define or call (example: Fn)",
+            // Null byte
+            name[nameLen] = 0;
+
+            if (!name || !name[0])
+                error("'F' keyword requires a function name to define or call (example: Fname~)",
                     buffer, i - 1);
 
             ++scope;
@@ -585,17 +627,21 @@ int main(int argc, char ** argv)
                 continue;
             }
 
-            int ind = varlistGetDef(funcs, n, -1);
-            if (ind > -1)
-            {
+            int ind = varlistGetDef(funcs, name, -1);
+
+            // If function exists
+            if (ind > -1) {
                 // printf("%d (%c)\n", ind, buffer[ind - 1]);
+                // Name is no longer required
+                free(name);
                 i = ind - 1;
             }
+            // If function doesn't exist yet
             else
             {
                 pushToken(ch, i + 1);
                 is_defining = 1;
-                varlistAdd(funcs, n, i + 1);
+                varlistAdd(funcs, name, i + 1);
                 ++skipping;
             }
         }
@@ -680,33 +726,50 @@ int main(int argc, char ** argv)
         }
         else if (ch == 'r')
         {
-            char n = 0;
-            if (++i < length)
-                n = buffer[i];
+            // Get length of name
+            int start = i + 1;
+            int nameLen = 0;
+            while (++i < length && buffer[i] && !isspace(buffer[i]) && buffer[i] != '~')
+                ++nameLen;
 
-            if (isspace(n))
-                n = 0;
+            // Get name
+            char * name = malloc(nameLen + 1);
+            for (int a = 0; a < nameLen; a++)
+                name[a] = buffer[start + a];
 
-            if (!n)
-                error("'r' keyword requires a register name to retrieve from (example: r1)",
+            // Null byte
+            name[nameLen] = 0;
+
+            if (!name || !name[0])
+                error("'r' keyword requires a register name to retrieve from (example: r1~)",
                     buffer, i - 1);
 
-            ptr = varlistGet(registers, n);
+            ptr = varlistGet(registers, name);
+
+            // Name is no longer required
+            free(name);
         }
         else if (ch == 'R')
         {
-            char n = 0;
-            if (++i < length)
-                n = buffer[i];
+            // Get length of name
+            int start = i + 1;
+            int nameLen = 0;
+            while (++i < length && buffer[i] && !isspace(buffer[i]) && buffer[i] != '~')
+                ++nameLen;
 
-            if (isspace(n))
-                n = 0;
+            // Get name
+            char * name = malloc(nameLen + 1);
+            for (int a = 0; a < nameLen; a++)
+                name[a] = buffer[start + a];
 
-            if (!n)
-                error("'R' keyword requires a register name to store into (example: R1)",
+            // Null byte
+            name[nameLen] = 0;
+
+            if (!name || !name[0])
+                error("'R' keyword requires a register name to store into (example: R1~)",
                     buffer, i - 1);
 
-            varlistAdd(registers, n, ptr);
+            varlistAdd(registers, name, ptr);
         }
         // Useful memory things
         else if (ch == 'm')
@@ -719,7 +782,7 @@ int main(int argc, char ** argv)
             if (n == 's')
                 ptr = vmem->size;
             else if (n == 'S')
-                vmem->items[varlistGet(registers, '0')] = ptr;
+                vmem->items[varlistGet(registers, "0")] = ptr;
             // Print string from memory using ptr as the pointer
             else if (n == 'P')
             {
@@ -787,12 +850,14 @@ int main(int argc, char ** argv)
         }
         else if (ch == ',')
         {
+            // Those sneaky [0]'s after each `fgets` call are to prevent the
+            // -Wunused-result warning from coming up during compilation
             char in[2] = {0};
-            fgets(in, 2, file_descriptor);
+            fgets(in, 2, file_descriptor)[0];
 
             // If pesky carriage returns are in the way in a file, skip them
             while (file_descriptor != stdin && *in == '\r')
-                fgets(in, 2, file_descriptor);
+                fgets(in, 2, file_descriptor)[0];
 
             if (file_descriptor == stdin && (
                 *in == '\n' || *in == '\r' || *in < 0)

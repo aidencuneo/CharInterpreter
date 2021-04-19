@@ -1,84 +1,84 @@
 # See code_styling.txt for code styling information
 
 # fun compile_line 1
-Fx
+Fcompile_line~
     # Save this string
-    < =S
+    < =S~
 
     # Trim spaces from the start of the string
-    $S m R0 0ff2 -- !:
-        $S 1 =S
-        $S m R0 0ff2 -- !
+    $S~ m R0~ 0ff2 -- !:
+        $S~ 1 =S~
+        $S~ m R0~ 0ff2 -- !
     ;
 
     # If this string starts with '#', skip the whole thing
-    $S m R0 0ff5 -- !?
+    $S~ m R0~ 0ff5 -- !?
         # Increment pointer until it reaches the end of this string
-        $S m :
-            $S 1 =S $S m
+        $S~ m :
+            $S~ 1 =S~ $S~ m
         ;
     ;
 
     # Compare this string with each of the saved strings
 
     # 'push'
-    $S > rA > F= ?
+    $S~ > rA~ > Fstrcmp~ ?
         # ')'
         0ffb M
     ;
 
     # 'pop'
-    $S > rB > F= ?
+    $S~ > rB~ > Fstrcmp~ ?
         # '<'
         0ffff M
     ;
 
     # 'if'
-    $S > rC > F= ?
+    $S~ > rC~ > Fstrcmp~ ?
         # '?'
         0ffff3 M
     ;
 
     # 'while'
-    $S > rD > F= ?
+    $S~ > rD~ > Fstrcmp~ ?
         # ':'
         0fffd M
     ;
 
     # 'end'
-    $S > rE > F= ?
+    $S~ > rE~ > Fstrcmp~ ?
         # ';'
         0fffe M
     ;
 
     # 'memadd'
-    $S > rF > F= ?
+    $S~ > rF~ > Fstrcmp~ ?
         # 'M'
         0fffff2 M
     ;
 
     # 'memget'
-    $S > rG > F= ?
+    $S~ > rG~ > Fstrcmp~ ?
         # 'm'
         0fffffff4 M
     ;
 
     # 'print '
-    $S > rH > Fs ?
+    $S~ > rH~ > Fstartswith~ ?
         # 'print d'
-        $S 6 m R0 0ffffffa -- !?
+        $S~ 6 m R0~ 0ffffffa -- !?
             # 'p'
             0fffffff7 M
         ;
 
         # 'print c'
-        $S 6 m R0 0ffffff9 -- !?
+        $S~ 6 m R0~ 0ffffff9 -- !?
             # 'P'
             0fffff5 M
         ;
 
         # 'print s'
-        $S 6 m R0 0fffffffa -- !?
+        $S~ 6 m R0~ 0fffffffa -- !?
             # 'm'
             0fffffff4 M
             # 'P'
@@ -87,21 +87,21 @@ Fx
     ;
 
     # 'println '
-    $S > rI > Fs ?
+    $S~ > rI~ > Fstartswith~ ?
         # 'println d'
-        $S 8 m R0 0ffffffa -- !?
+        $S~ 8 m R0~ 0ffffffa -- !?
             # 'p'
             0fffffff7 M
         ;
 
         # 'println c'
-        $S 8 m R0 0ffffff9 -- !?
+        $S~ 8 m R0~ 0ffffff9 -- !?
             # 'P'
             0fffff5 M
         ;
 
         # 'println s'
-        $S 8 m R0 0fffffffa -- !?
+        $S~ 8 m R0~ 0fffffffa -- !?
             # 'm'
             0fffffff4 M
             # 'P'
@@ -122,7 +122,7 @@ Fx
     ;
 
     # 'memset'
-    $S > rJ > F= ?
+    $S~ > rJ~ > Fstrcmp~ ?
         # 'm'
         0fffffff4 M
         # 'S'
@@ -130,113 +130,113 @@ Fx
     ;
 
     # 'set'
-    $S > rK > Fs ?
+    $S~ > rK~ > Fstartswith~ ?
         # '0'
         0fff3 M
         # Add the number after 'set ' (including the space)
         # (convert to integer, then save as a Char num)
         # 'set num'
-        $S 4 > FI > Fi
+        $S~ 4 > Fto_int~ > Fto_char_num~
     ;
 
     # 'ch'
-    $S > rL > Fs ?
+    $S~ > rL~ > Fstartswith~ ?
         # '0'
         0fff3 M
         # Add the number after 'ch ' (including the space)
         # (as a Char num)
         # 'ch num'
-        $S 3 m > Fi
+        $S~ 3 m > Fto_char_num~
     ;
 
     # 'add'
-    $S > rM > Fs ?
+    $S~ > rM~ > Fstartswith~ ?
         # Add the expression after 'add ' (including the space)
         # 'add num'
-        $S 4 > FX
+        $S~ 4 > Fcompile_expression~
 
         # '++'
         0ffd MM
     ;
 
     # 'sub'
-    $S > rN > Fs ?
+    $S~ > rN~ > Fstartswith~ ?
         # Add the expression after 'sub ' (including the space)
         # 'sub num'
-        $S 4 > FX
+        $S~ 4 > Fcompile_expression~
 
         # '--'
         0fff MM
     ;
 
     # 'mul'
-    $S > rO > Fs ?
+    $S~ > rO~ > Fstartswith~ ?
         # Add the expression after 'mul ' (including the space)
         # 'mul num'
-        $S 4 > FX
+        $S~ 4 > Fcompile_expression~
 
         # '**'
         0ffc MM
     ;
 
     # 'div'
-    $S > rP > Fs ?
+    $S~ > rP~ > Fstartswith~ ?
         # Add the expression after 'div ' (including the space)
         # 'div num'
-        $S 4 > FX
+        $S~ 4 > Fcompile_expression~
 
         # '//'
         0fff2 MM
     ;
 
     # 'exit'
-    $S > rQ > F= ?
+    $S~ > rQ~ > Fstrcmp~ ?
         # 'q'
         0fffffff4 M
     ;
 
     # 'setvar'
-    $S > rR > Fs ?
+    $S~ > rR~ > Fstartswith~ ?
         # '='
         0ffff1 M
         # Add the letter after 'setvar ' (including the space)
-        $S 7 m M
+        $S~ 7 m M
     ;
 
     # 'setreg'
-    $S > rS > Fs ?
+    $S~ > rS~ > Fstartswith~ ?
         # 'R'
         0fffff7 M
         # Add the letter after 'setreg ' (including the space)
-        $S 7 m M
+        $S~ 7 m M
     ;
 
     # 'getvar'
-    $S > rT > Fs ?
+    $S~ > rT~ > Fstartswith~ ?
         # '$'
         0ff6 M
         # Add the letter after 'getvar ' (including the space)
-        $S 7 m M
+        $S~ 7 m M
     ;
 
     # 'getreg'
-    $S > rU > Fs ?
+    $S~ > rU~ > Fstartswith~ ?
         # 'r'
         0fffffff9 M
         # Add the letter after 'getreg ' (including the space)
-        $S 7 m M
+        $S~ 7 m M
     ;
 
     # 'define'
-    $S > rV > Fs ?
+    $S~ > rV~ > Fstartswith~ ?
         # 'F'
         0ffffa M
         # Add the letter after 'define ' (including the space)
-        $S 7 m M
+        $S~ 7 m M
     ;
 
     # 'call'
-    $S > rW > Fs ?
+    $S~ > rW~ > Fstartswith~ ?
         # Function calling differs from function defining in that the pointer
         # is saved to the stack and retrieved from the stack before and after
         # function calling, respectively.
@@ -246,13 +246,13 @@ Fx
         # 'F'
         0ffffa M
         # Add the letter after 'call ' (including the space)
-        $S 5 m M
+        $S~ 5 m M
         # '<'
         0ffff M
     ;
 
     # 'ptr'
-    $S > rX > Fs ?
+    $S~ > rX~ > Fstartswith~ ?
         # Define a pointer to an array of ints with a length equal to this
         # instruction's argument
 
@@ -266,7 +266,7 @@ Fx
         # Add the number after 'ptr ' (including the space)
         # Also add one to that number, because the pointer should have the
         # length specified, plus a null byte at the end
-        $S 4 > FI 1 > Fi
+        $S~ 4 > Fto_int~ 1 > Fto_char_num~
 
         # ':'
         0fffd M
@@ -292,57 +292,72 @@ Fx
     ;
 
     # "'" || '"'
-    $S m R0 0ff9 -- ! >
-    $S m R0 0ff4 -- ! R0 < | ?
+    $S~ m R0~ 0ff9 -- ! >
+    $S~ m R0~ 0ff4 -- ! R0~ < | ?
         # Save starting quote to put at the end
-        $S m >
+        $S~ m >
 
-        $S m :
-            $S m M
-            $S 1 =S $S m
+        $S~ m :
+            $S~ m M
+            $S~ 1 =S~ $S~ m
         ;
 
         # Fetch starting quote to put at the end of this string, as long as the
         # string hasn't already been ended
         # (Ending quotes are optional)
-        $S -1+ m R0 ( -- ?
+        $S~ -1+ m R0~ ( -- ?
             < M
         ;
     ;
 
     # 'and'
-    $S > rY > Fs ?
+    $S~ > rY~ > Fstartswith~ ?
         # Add the expression after 'and ' (including the space)
         # 'and num'
-        $S 4 > FX
+        $S~ 4 > Fcompile_expression~
 
         # '&'
         0ff8 M
     ;
 
     # 'or'
-    $S > rZ > Fs ?
+    $S~ > rZ~ > Fstartswith~ ?
         # Add the expression after 'or ' (including the space)
         # 'or num'
-        $S 3 > FX
+        $S~ 3 > Fcompile_expression~
 
         # '|'
         0ffffffff4 M
     ;
 
+    # 'inline'
+    $S~ > rAA~ > Fstartswith~ ?
+        # Add everything after 'inline ' (including the space)
+        $S~ 7 =S~
+
+        $S~ m :
+            # Add character
+            $S~ m M
+
+            # Increment pointer
+            $S~ 1 =S~
+            $S~ m
+        ;
+    ;
+
     # Increment pointer until it reaches the next string in the list
-    $S m :
-        $S 1 =S $S m
+    $S~ m :
+        $S~ 1 =S~ $S~ m
     ;
 
     # Push new string pointer (+1) back into the stack
-    $S 1 >
+    $S~ 1 >
 ;
 
 # fun compile_expression 1
-FX
+Fcompile_expression~
     # Get pointer to expression and save it
-    <=A
+    <=A~
 
     # Always begin an expression with '>' to preserve the pointer
     # '>'
@@ -350,28 +365,28 @@ FX
 
     # If first letter is a digit, convert to int and push value as a Char num
     # A > 47 && A < 58
-    0fff2 R0 $A m } >
-    0fffd R0 $A m { R0 < & ?
+    0fff2 R0~ $A~ m } >
+    0fffd R0~ $A~ m { R0~ < & ?
         # Convert to int and push value as a Char num
-        $A > FI > Fi
+        $A~ > Fto_int~ > Fto_char_num~
     ;
 
     # If first letter is 'r', get the value from the given register name
     # A == 'r'
-    0fffffff9 R0 $A m -- !?
+    0fffffff9 R0~ $A~ m -- !?
         # Get the value from the given register name
         # 'r'
         0fffffff9 M
-        $A 1 m M
+        $A~ 1 m M
     ;
 
     # If first letter is '$', get the value from the given variable name
     # A == '$'
-    0ff6 R0 $A m -- !?
+    0ff6 R0~ $A~ m -- !?
         # Get the value from the given variable name
         # '$'
         0ff6 M
-        $A 1 m M
+        $A~ 1 m M
     ;
 
     # Always push the compiled result of an expression into r0
@@ -387,120 +402,120 @@ FX
 ;
 
 # fun strcmp 2
-F=
+Fstrcmp~
     # Save both string pointers to r1 and r2
-    < R1
-    < R2
+    < R1~
+    < R2~
 
     # Equal? (Starts true)
-    01=E
+    01=E~
 
     # Compare string equality
-    r1 m R0
-    r2 m & :
+    r1~ m R0~
+    r2~ m & :
         # If !equal
-        r1 m R0
-        r2 m -- ?
+        r1~ m R0~
+        r2~ m -- ?
             # Set unequal
-            0=E
+            0=E~
         ;
 
-        r1 1 R1 m R0
-        r2 1 R2 m &
+        r1~ 1 R1~ m R0~
+        r2~ 1 R2~ m &
     ;
 
     # If either string still has bytes remaining, set unequal
-    r1 m ?
-        0=E
+    r1~ m ?
+        0=E~
     ;
-    r2 m ?
-        0=E
+    r2~ m ?
+        0=E~
     ;
 
-    $E
+    $E~
 ;
 
 # fun startswith 2
-Fs
+Fstartswith~
     # r1 is prefix
     # r2 is string to check prefix against
 
     # Save both string pointers to r1 and r2
-    < R1
-    < R2
+    < R1~
+    < R2~
 
     # Equal? (Starts true)
-    01=E
+    01=E~
 
     # Compare string equality
-    r1 m :
+    r1~ m :
         # If !equal
-        r1 m R0
-        r2 m -- ?
+        r1~ m R0~
+        r2~ m -- ?
             # Set unequal
-            0=E
+            0=E~
         ;
 
         # Increment pointers
-        r1 1 R1
-        r2 1 R2
+        r1~ 1 R1~
+        r2~ 1 R2~
 
-        r1 m
+        r1~ m
     ;
 
     # Stop at the end of the shortest string because this function is only
     # checking whether a string starts with another
 
-    $E
+    $E~
 ;
 
 # fun push_int_as_charnum 1
-Fi
+Fto_char_num~
     # Push an integer into compiled data as a Char num
     # Example: 32 -> ff2
 
-    <=A
+    <=A~
 
     # While num > 14
-    0e R0 $A } :
+    0e R0~ $A~ } :
         # Add 'f' to compiled data
         0ffffffc M
 
         # num -= 15
-        $A -f+ =A
+        $A~ -f+ =A~
     
         # While num > 14
-        0e R0 $A }
+        0e R0~ $A~ }
     ;
 
     # Now check the remaining value and add the final character
 
     # 14 -> 'e'
-    $A -e+ !?
+    $A~ -e+ !?
         # Add 'e' to compiled data
         0ffffffb M
     ;
 
     # 13 -> 'd'
-    $A -d+ !?
+    $A~ -d+ !?
         # Add 'd' to compiled data
         0ffffffa M
     ;
 
     # 12 -> 'c'
-    $A -c+ !?
+    $A~ -c+ !?
         # Add 'c' to compiled data
         0ffffff9 M
     ;
 
     # 11 -> 'b'
-    $A -b+ !?
+    $A~ -b+ !?
         # Add 'b' to compiled data
         0ffffff8 M
     ;
 
     # 10 -> 'a'
-    $A -a+ !?
+    $A~ -a+ !?
         # Add 'a' to compiled data
         0ffffff7 M
     ;
@@ -509,61 +524,61 @@ Fi
 
     # If num < 10
     # (make sure num isn't 0)
-    0a R0 $A { R0
-    $A & ?
+    0a R0~ $A~ { R0~
+    $A~ & ?
         # Add '0' (48) to number and add to compiled data
-        $A fff3 M
+        $A~ fff3 M
     ;
 ;
 
-# fun toint 1
-FI
+# fun to_int 1
+Fto_int~
     # Convert a string pointer to an integer
 
     # Multiplier
-    01=M
+    01=M~
 
     # Pointer
-    <=A
+    <=A~
 
     # Result num
-    0=B
+    0=B~
 
     # Start pointer
-    $A=C
+    $A~ =C~
 
     # Increment A until a null byte is reached
-    $A m :
-        $A 1 =A
-        $A m
+    $A~ m :
+        $A~ 1 =A~
+        $A~ m
     ;
 
     # Decrement A once
-    $A -1+ =A
+    $A~ -1+ =A~
 
     # While A > C - 1 (A >= C)
-    $C -1+ R0 $A } :
+    $C~ -1+ R0~ $A~ } :
         # B += (*A - '0') * M
-        $A m -fff3+ R0 $M ** R0 $B ++ =B
+        $A~ m -fff3+ R0~ $M~ ** R0~ $B~ ++ =B~
 
         # M *= 10
-        $M R0 0a ** =M
+        $M~ R0~ 0a ** =M~
 
         # Decrement A
-        $A -1+ =A
+        $A~ -1+ =A~
 
         # Loop condition
-        $C -1+ R0 $A }
+        $C~ -1+ R0~ $A~ }
     ;
 
-    $B
+    $B~
 ;
 
 # Get argc and argv
 @
 
-# Clear first two arguments (keep argc in $v)
-<=v
+# Clear first two arguments (keep argc in $argc~)
+<=argc~
 <<
 
 # Open file (third argument)
@@ -573,56 +588,55 @@ FI
 ? q ;
 
 # Save a whole heap of strings for later
-'push'     RA
-'pop'      RB
-'if'       RC
-'while'    RD
-'end'      RE
-'memadd'   RF
-'memget'   RG
-'print '   RH
-'println ' RI
-'memset'   RJ
-'set '     RK
-'ch '      RL
-'add '     RM
-'sub '     RN
-'mul '     RO
-'div '     RP
-'exit'     RQ
-'setvar '  RR
-'setreg '  RS
-'getvar '  RT
-'getreg '  RU
-'define '  RV
-'call '    RW
-'ptr '     RX
-'and '     RY
-'or '      RZ
+'push'     RA~
+'pop'      RB~
+'if'       RC~
+'while'    RD~
+'end'      RE~
+'memadd'   RF~
+'memget'   RG~
+'print '   RH~
+'println ' RI~
+'memset'   RJ~
+'set '     RK~
+'ch '      RL~
+'add '     RM~
+'sub '     RN~
+'mul '     RO~
+'div '     RP~
+'exit'     RQ~
+'setvar '  RR~
+'setreg '  RS~
+'getvar '  RT~
+'getreg '  RU~
+'define '  RV~
+'call '    RW~
+'ptr '     RX~
+'and '     RY~
+'or '      RZ~
+'inline '  RAA~
 
 # Pointer to tokenised code
 ms >
 
 # Number of lines tokenised (starts at 1)
-1=i
+1=i~
 
 # Tokenisation
 , :
     # Save current character into c
-    =c
-
-    $c P
+    =c~
 
     # Replace newlines with null bytes
-    $c R0 0a -- !?
+    $c~ R0~ 0a -- !?
         0 M
         # Increment line count
-        $i 1 =i
+        $i~ 1 =i~
     ;
 
     # Push all other characters into memory as normal
-    $c R0 0a -- ?
-        $c M
+    $c~ R0~ 0a -- ?
+        $c~ M
     ;
 
     # Get next character
@@ -633,21 +647,19 @@ ms >
 0 M
 
 # Pointer to compiled data
-ms Ra
+ms Rcompiled_data~
 
 # Compilation
-$i :
+$i~ :
     # Compile this string
-    Fx
+    Fcompile_line~
 
     # Decrement counter
-    $i -1+ =i $i
+    $i~ -1+ =i~ $i~
 ;
 
 # Suffix compiled data with a null byte
 0 M
-
-0aP
 
 # Set file descriptor to the output file
 'output.txt' # File name
@@ -660,7 +672,7 @@ O # Open the file for writing
 0a.
 
 # Write compiled data to file
-ra m.
+rcompiled_data~ m.
 
 # Newline
 0a.

@@ -1,0 +1,25 @@
+# See code_styling.txt for code styling information
+
+# fun compile_line 1
+define x
+    # Pop the pointer
+    pop
+
+    # Save current string
+    pop
+    setvar S
+
+    # Trim spaces from the start of the string
+    inline $S m R0 0ff2 -- !:
+    inline     $S 1 =S
+    inline     $S m R0 0ff2 -- !
+    end
+
+    # If this string starts with '#', skip the whole thing
+    inline $S m R0 0ff5 -- !?
+        # Increment pointer until it reaches the end of this string
+    inline     $S m :
+    inline         $S 1 =S $S m
+        end
+    end
+end

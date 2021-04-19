@@ -37,6 +37,25 @@ define h
         getvar C
     end
 
+    # Make sure result hash can fit into a single character
+
+    # If hash is less than 0, make hash positive
+    getvar H
+    call a
+    setvar H
+
+    # hash %= 1114111
+    set 111
+    mul 100
+    add 41
+    mul 100
+    add 11
+    setreg 0
+
+    getvar H
+    inline %
+    setvar H
+
     # Return result hash
     getvar H
     push
@@ -45,13 +64,36 @@ define h
     push
 end
 
-'aba
+
+# fun abs 1
+define a
+    # Save pointer
+    pop
+    setvar P
+
+    # If pointer < 0
+    inline 0 R0 $P {
+    if
+        # Make pointer positive
+        getvar P
+        sub $P
+        sub $P
+        setvar P
+    end
+
+    # Push result
+    getvar P
+    push
+end
+
+
+'hash'
 call h
 
 pop
 println d
 
-'aaa
+'compile_code'
 call h
 
 pop

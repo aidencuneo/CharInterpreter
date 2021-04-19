@@ -1,6 +1,6 @@
 struct varlist
 {
-    char * names;
+    char ** names;
     int * values;
     int size;
 
@@ -12,7 +12,7 @@ struct varlist * newVarlist(int block_size)
 {
     struct varlist * self = malloc(sizeof(struct varlist));
 
-    self->names = malloc(block_size);
+    self->names = malloc(block_size * sizeof(char *));
     self->values = malloc(block_size * sizeof(int));
     self->size = 0;
 
@@ -27,45 +27,47 @@ void varlistResize(struct varlist * self)
     if (self->size > self->alloc - 1)
     {
         self->alloc += self->alloc_size;
-        self->names = realloc(self->names, self->alloc);
+        self->names = realloc(self->names, self->alloc * sizeof(char *));
         self->values = realloc(self->values, self->alloc * sizeof(int));
     }
 }
 
-void varlistAdd(struct varlist * self, char name, int value)
+void varlistAdd(struct varlist * self, char * name, int value)
 {
     varlistResize(self);
 
-    int ind = self->size;
-
     for (int i = 0; i < self->size; i++)
-        if (self->names[i] == name)
+        if (!strcmp(self->names[i], name))
         {
-            ind = i;
-            break;
+            // If a variable with this name was found, modify it
+            free(name); // Name is not required, because it's already known
+            self->values[i] = value;
+
+            return;
         }
 
-    self->names[ind] = name;
-    self->values[ind] = value;
+    // If a variable with this name wasn't found, add it to the end
+    self->names[self->size] = name;
+    self->values[self->size] = value;
 
     ++self->size;
 }
 
 // Get an item from a varlist, but return a
 // specified default value if not found
-int varlistGetDef(struct varlist * self, char name, int def)
+int varlistGetDef(struct varlist * self, char * name, int def)
 {
     if (self->size <= 0)
         return def;
 
     for (int i = 0; i < self->size; i++)
-        if (self->names[i] == name)
+        if (!strcmp(self->names[i], name))
             return self->values[i];
 
     return def;
 }
 
-int varlistGet(struct varlist * self, char name)
+int varlistGet(struct varlist * self, char * name)
 {
     return varlistGetDef(self, name, 0);
 }
