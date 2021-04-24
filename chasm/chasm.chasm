@@ -124,8 +124,13 @@ define compile_line
     # 'memadd'
     inline $S~ > rF~ > Fstrcmp~ ?
         # 'M'
-    inline     0fffff2 M
-    inline ;
+        set 77
+        memadd
+
+        getvar S
+        add 4
+        inline > Fto_int~ > Fto_char_num~
+    end
 
     # 'memget'
     inline $S~ > rG~ > Fstrcmp~ ?

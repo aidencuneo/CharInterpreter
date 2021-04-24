@@ -12,3 +12,5 @@ getvar blishen
 println d
 getvar cuneo
 println d
+
+memadd $aiden
