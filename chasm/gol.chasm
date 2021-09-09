@@ -1,0 +1,77 @@
+$codeptr = 0
+
+# Collect code
+inline ,
+while
+    memadd
+    inline ,
+end
+
+# Null byte
+memadd
+
+# Keep length of code
+inline ms
+setvar codelen
+
+# Interpreter variables
+$ptr = 0
+
+memget $codeptr
+while
+    println c
+    setvar ch
+
+    set $ch
+    eq '+'
+    if
+        set $ptr
+        add $codelen
+        memget
+        add 1
+
+        push
+        set $ptr
+        setreg 0
+        pop
+
+        memset
+    end
+
+    set $ch
+    eq '-'
+    if
+        set $ptr
+        add $codelen
+        memget
+        sub 1
+
+        push
+        set $ptr
+        setreg 0
+        pop
+
+        memset
+    end
+
+    set $ch
+    eq '>'
+    if
+        set $ptr
+        add 1
+        setvar ptr
+    end
+
+    set $ch
+    eq '<'
+    if
+        set $ptr
+        sub 1
+        setvar ptr
+    end
+
+    set $codeptr
+    add 1
+    setvar codeptr
+    memget
+end

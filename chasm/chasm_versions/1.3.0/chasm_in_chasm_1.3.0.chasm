@@ -122,34 +122,22 @@ define compile_line
     inline ;
 
     # 'memadd'
-    inline $S~ > rF~ > Fstartswith~ ?
-        set 'c'
-        # Add the expression after 'memadd' (space not required)
-        # 'memadd num'
-        set $S
-        add 7
-        call compile_expression
-
+    inline $S~ > rF~ > Fstrcmp~ ?
         # 'M'
         set 77
         memadd
+
+        getvar S
+        add 4
+        inline > Fto_int~ > Fto_char_num~
     end
 
     # 'memget'
-    inline $S~ > rG~ > Fstartswith~ ?
-        # Add the expression after 'memget' (space not required)
-        # 'memget num'
-        set $S
-        add 7
-        call compile_expression
-
+    inline $S~ > rG~ > Fstrcmp~ ?
         # 'm'
-        set 109
-        memadd
-        # ' '
-        set 32
-        memadd
-    end
+    inline     0fffffff4 M
+    inline     0ff2 M
+    inline ;
 
     # 'print '
     inline $S~ > rH~ > Fstartswith~ ?
@@ -212,12 +200,10 @@ define compile_line
     # 'memset'
     inline $S~ > rJ~ > Fstrcmp~ ?
         # 'm'
-        set 'm'
-        memadd
+    inline     0fffffff4 M
         # 'S'
-        set 'S'
-        memadd
-    end
+    inline     0fffff8 M
+    inline ;
 
     # 'set'
     inline $S~ > rK~ > Fstartswith~ ?
@@ -226,22 +212,21 @@ define compile_line
         # Add the number after 'set ' (including the space)
         # (convert to integer, then save as a Char num)
         # 'set num'
-        set $S
+        getvar S
         add 4
         call compile_expression
-    end
+    # inline     $S~ 4 > Fto_int~ > Fto_char_num~
+    inline ;
 
-    # 'not'
+    # 'ch'
     inline $S~ > rL~ > Fstartswith~ ?
-        # Add the expression after 'not' (space not required)
-        # 'not num'
-        set $S
-        add 4
-        call compile_expression
-
-        set '!'
-        memadd
-    end
+        # '0'
+    inline     0fff3 M
+        # Add the number after 'ch ' (including the space)
+        # (as a Char num)
+        # 'ch num'
+    inline     $S~ 3 m > Fto_char_num~
+    inline ;
 
     # 'add'
     inline $S~ > rM~ > Fstartswith~ ?
@@ -590,47 +575,6 @@ define compile_line
     inline         $S~ 1 =S~
     inline         $S~ m
     inline     ;
-    inline ;
-
-    # 'eq '
-    inline $S~ > rAB~ > Fstartswith~ ?
-        # Add the expression after 'eq ' (including the space)
-        # 'eq num'
-        # Always begin an arithmetic expression with '>' to preserve the pointer
-        # '>'
-        set '>'
-        memadd
-
-        set $S
-        add 3
-        call compile_expression
-
-        # Always push the compiled result of an expression into r0
-
-        # 'R'
-        set 'R'
-        memadd
-        # '0'
-        set '0'
-        memadd
-        # '~'
-        set '~'
-        memadd
-
-        # Always end an expression with '<' to retrieve the pointer
-        # '<'
-        set '<'
-        memadd
-
-        # '--'
-        set '-'
-        memadd
-        set '-'
-        memadd
-
-        # '!'
-        set '!'
-        memadd
     inline ;
 
     # Increment pointer until it reaches the next string in the list
@@ -1078,7 +1022,7 @@ setreg I
 setreg J
 'set '
 setreg K
-'not'
+'ch '
 setreg L
 'add '
 setreg M
@@ -1110,10 +1054,6 @@ setreg Y
 setreg Z
 'inline '
 setreg AA
-'eq '
-setreg AB
-'neq '
-setreg AC
 
 # Pointer to tokenised code
 inline ms
